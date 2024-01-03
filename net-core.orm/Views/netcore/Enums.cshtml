@@ -1,0 +1,38 @@
+﻿@using CoreORM
+@using System.Linq
+@using System.Data
+@model DBDatabase
+@{ 
+    //get enums list
+    var dtGroups = Model.DB.GetDataTable("SELECT distinct DataGroup FROM EnumsList ORDER BY DataGroup");
+    var dtEnumsList = Model.DB.GetDataTable("SELECT * FROM EnumsList ORDER BY DataGroup, DataText").AsEnumerable();
+
+}using System;
+using System.Collections.Generic;
+using System.Text;
+
+//Do not modify. v1.0
+//Code generated using custom ORM Mapper on @DateTime.Now
+namespace @(Model.CodeNameSpace)
+{   
+    public static partial class EnumGroups
+    {
+@foreach (System.Data.DataRow dr in dtGroups.Rows)
+{
+@:        public static string @(dr["DataGroup"]) = "@(dr["DataGroup"])";
+}
+    }
+
+@foreach (System.Data.DataRow dr in dtGroups.Rows)
+{
+    string datagroup = (string)dr["DataGroup"];
+@:    public enum @(datagroup)
+@:    {
+    var dtEnums = dtEnumsList.Where(i => i.Field<string>("DataGroup") == datagroup);
+    foreach (System.Data.DataRow drEnum in dtEnums)
+    {
+@:        @(drEnum["DataText"]) = @(drEnum["Id"]),
+    }
+@:    }
+}   
+}

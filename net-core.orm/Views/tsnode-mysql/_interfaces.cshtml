@@ -1,0 +1,30 @@
+﻿@using CoreORM
+@model DBDatabase
+//Do not modify. v1.0
+//Code generated using custom ORM Mapper on @DateTime.Now
+
+import { DBResult } from "./_models";
+
+export interface IDBModel {
+  Save(): Promise@(Html.Raw("<"))DBResult>;
+  Set(obj: any): boolean;
+}
+@foreach (var table in Model.Tables)
+{
+    string tablename = table.Name;
+    string pkname = table.Id.Name;
+@:export interface I@(tablename) {
+
+    foreach (var col in table.Columns)
+    {
+if (col.IsNullable)
+            {
+@:  @(col.Name) : @(col.MappedDataType.JSCodeType) | null;
+            }
+            else
+            {
+@:  @(col.Name) : @(col.MappedDataType.JSCodeType);
+            }
+    }
+@:}
+}

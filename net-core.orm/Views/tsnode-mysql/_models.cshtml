@@ -1,0 +1,79 @@
+﻿@using CoreORM
+@model DBDatabase
+//Do not modify. v1.0
+//Code generated using custom ORM Mapper on @DateTime.Now
+import * as i from './_interfaces';
+import * as d from '../database';
+import * as util from '../utilities'
+
+export class DBResult {
+  RowsAffected = 0;
+  Valid = false;
+  MessageText = "";
+  Id = 0;
+}
+
+@foreach (var table in Model.Tables)
+{
+    string tablename = table.Name;
+    string pkname = table.Id.Name;
+@:export class @(tablename) implements i.I@(tablename), i.IDBModel {
+@:  d:d.Database;
+@:  _IsNew ? : boolean = null;
+@:  constructor( db:d.Database){
+@:    this.d = db;
+@:  }
+    foreach (var col in table.Columns)
+    {
+        if (col.IsPrimaryKey && col.Name == "Id")
+        {
+@:  @(col.Name) : @(col.MappedDataType.JSCodeType) = -1;
+        }
+        else
+        {
+            if (col.IsNullable)
+            {
+@:  @(col.Name) : @(col.MappedDataType.JSCodeType) | null = null;
+            }
+            else
+            {
+@:  @(col.Name) : @(col.MappedDataType.JSCodeType) = @(Html.Raw(col.MappedDataType.JSCodeTypeDefaultValue));
+            }
+        }
+    }
+<text>
+  async GetById(id: number) : Promise@(Html.Raw("<"))boolean> {
+    let r = await this.d.Get@(tablename)(id);
+    return this.Set(r);
+  }
+
+  Set(mdl: i.I@(tablename) | null | any[]): boolean {
+    if(Array.isArray(mdl)) {
+        if(mdl.length > 0){
+            mdl = mdl[0];
+            if (mdl) {
+                util.Copy(mdl, this);
+                return true;
+            }
+        }
+    } else if (mdl) {
+        util.Copy(mdl, this);
+        return true;
+    }
+    return false;
+  }
+
+  async Save(): Promise@(Html.Raw("<"))DBResult> { return await this.d.Save@(tablename)(this._IsNew, this);}
+
+  IClone() : i.I@(tablename){
+    var rv : any = {};
+@{    foreach (var col in table.Columns)
+        {
+    @:    rv.@(col.Name) = this.@(col.Name);
+        }
+}
+    return rv as i.I@(tablename);
+  }
+</text>
+@:}
+}

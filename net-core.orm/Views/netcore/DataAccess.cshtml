@@ -1,0 +1,385 @@
+﻿@using CoreORM
+@using CoreUtils
+@model DBDatabase
+using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Linq;
+using System.Data.Common;
+using System.Data;
+using System.Data.SqlClient;
+using CoreUtils;
+
+//Do not modify.
+//Code generated using custom ORM Mapper on @DateTime.Now
+namespace @(Model.CodeNameSpace)
+{
+    public static partial class DataAccess
+    {
+        public static string ConnectionString {
+            get {
+                return System.Configuration.ConfigurationManager.ConnectionStrings["Default"].ConnectionString;
+            }
+        }
+        public static SQLServerDatabase GetDB()
+        {
+            return new SQLServerDatabase(ConnectionString);
+        }
+@{
+    @:        #region execute code
+    @:        /*
+
+    foreach (var table in Model.Tables)
+    {
+        string tablename = table.Name;
+
+        string pkFunctionArgs = "";
+        string pkFunctionParams = "";
+
+        foreach (var pkCol in table.PrimaryKeys)
+        {
+            //get params
+            if (pkFunctionArgs.Length > 0)
+            {
+                pkFunctionArgs = pkFunctionArgs + ", ";
+                pkFunctionParams = pkFunctionParams + ", ";
+            }
+            pkFunctionArgs += pkCol.MappedDataType.CodeType + " " + pkCol.Name;
+            pkFunctionParams += " " + pkCol.Name;
+        }
+        <text>
+        </text>
+    }//end table loop
+    <text>
+        */
+        #endregion</text>
+
+    string codenewParatersDef = "List<IDbDataParameter> parameters = new List<IDbDataParameter>();";
+    foreach (var table in Model.Tables)
+    {
+        string tablename = table.Name;
+
+        string pkFunctionArgs = "";
+        string pkFunctionParams = "";
+        string listDef = "List<" + tablename + "> list = new List<" + tablename + ">();";
+
+        foreach (var pkCol in table.PrimaryKeys)
+        {
+            //get params
+            if (pkFunctionArgs.Length > 0)
+            {
+                pkFunctionArgs = pkFunctionArgs + ", ";
+                pkFunctionParams = pkFunctionParams + ", ";
+            }
+            pkFunctionArgs += pkCol.MappedDataType.CodeType + " " + pkCol.Name;
+            pkFunctionParams += " " + pkCol.Name;
+        }
+        ///// GET ////
+        <text>
+            #region @(tablename)
+            public static @(tablename) @(tablename)_Get(@(pkFunctionArgs))
+            {</text>
+        <text>            @(tablename) model = null;
+            SQLServerDatabase db = GetDB();
+            @(Html.Raw(codenewParatersDef))
+        </text>
+        foreach (var pkCol in table.PrimaryKeys)
+        {
+            string pkname = pkCol.Name;
+            @:            parameters.Add(db.GetParameter("@(Html.Raw("@"))@(pkname)", @(pkname)));
+        }
+        <text>
+            IDataReader r = null;
+            try
+            {
+            r = db.GetDataReader(SQLStrings.@(tablename)_Select, parameters, CommandType.Text);
+            if (r.Read())
+            {
+        </text>
+        foreach (var col in table.Columns)
+        {
+            @:                int pos@(col.Name) = r.GetOrdinal("@(col.Name)");
+        }
+        <text>
+            model = new @(tablename)
+            {
+        </text>
+        foreach (var col in table.Columns)
+        {
+            if (col.IsNullable)
+            {
+                @:                      @(col.Name) = Data.CastIt@(Html.Raw("<"))@(col.MappedDataType.CodeType)@(Html.Raw(">"))(r[pos@(col.Name)]),
+            }
+            else
+            {
+                @:                      @(col.Name) = (@(col.MappedDataType.CodeType))(r[pos@(col.Name)]),
+            }
+        }
+        <text>
+            };
+            }
+            r.Close();
+            }
+            catch
+            {
+            try
+            {
+            if(r != null)
+            {
+            // don't do this in finally clause or reader will not close
+            r.Close();
+            r.Dispose();
+            }
+            }
+            catch { }
+            throw;
+            }
+            return model;
+            }
+
+            public static List@(Html.Raw("<" + tablename + ">")) @(tablename)_Get(IDataReader r)
+            {
+            @(Html.Raw(listDef))
+            @(tablename) model;
+            try
+            {
+        </text>
+        foreach (var col in table.Columns)
+        {
+            @:                int pos@(col.Name) = r.GetOrdinal("@(col.Name)");
+        }
+        <text>
+            while(r.Read())
+            {
+            model = new @(tablename)()
+            {
+        </text>
+        foreach (var col in table.Columns)
+        {
+            if (col.IsNullable)
+            {
+                @:                      @(col.Name) = Data.CastIt@(Html.Raw("<"))@(col.MappedDataType.CodeType)@(Html.Raw(">"))(r[pos@(col.Name)]),
+            }
+            else
+            {
+                @:                      @(col.Name) = (@(col.MappedDataType.CodeType))(r[pos@(col.Name)]),
+            }
+        }
+        <text>
+            };
+            list.Add(model);
+            }
+            r.Close();
+            }
+            catch
+            {
+            try
+            {
+            if(r != null)
+            {
+            // don't do this in finally clause or reader will not close
+            r.Close();
+            r.Dispose();
+            }
+            }
+            catch { }
+            throw;
+            }
+            return list;
+            }
+            public static @(tablename) @(tablename)_Get(DataRow r)
+            {
+            @(tablename) model = new @(tablename)()
+            {
+        </text>
+        foreach (var col in table.Columns)
+        {
+            if (col.IsNullable)
+            {
+                @:                @(col.Name) = Data.CastIt@(Html.Raw("<"))@(col.MappedDataType.CodeType)@(Html.Raw(">"))(r["@(col.Name)"]),
+            }
+            else
+            {
+                @:                @(col.Name) = (@(col.MappedDataType.CodeType))(r["@(col.Name)"]),
+            }
+        }
+        <text>
+            };
+            return model;
+            }
+        </text>
+        <text>        public static List@(Html.Raw("<" + tablename + ">")) @(tablename)_Get(DataTable dt)
+            {
+            List@(Html.Raw("<" + tablename + ">")) list = new List@(Html.Raw("<" + tablename + ">"))();
+            foreach (DataRow r in dt.Rows)
+            {
+            list.Add(@(tablename)_Get(r));
+            }
+            return list;
+            }
+        </text>
+        ///// SAVE ////
+        <text>
+            public static int @(tablename)_Save(I@(tablename) _@(tablename))
+            {
+            SQLServerDatabase db = GetDB();
+            @(Html.Raw(codenewParatersDef))
+        </text>
+
+        if (table.Id != null)
+        {
+            @:            IDbDataParameter paramId = db.GetParameterOut("@(Html.Raw("@"))@(table.Id.Name)", _@(tablename).@(table.Id.Name), @(table.Id.MappedDataType.CodeDBType));
+            @:            parameters.Add(paramId);
+        }
+        foreach (var col in table.Columns.Where(i => i.IsIdentity == false))
+        {
+            if (col.Name == "Id")
+            {
+                continue;
+            }
+
+            if (col.MappedDataType.DatabaseType == "timestamp")
+            {
+                continue;
+            }
+            if (col.MappedDataType.DatabaseType == "geography"
+                || col.MappedDataType.DatabaseType == "geometry"
+                || col.MappedDataType.DatabaseType == "hierarchyid"
+                )
+            {
+                <text>
+                    var p@(col.Name) = db.GetParameter("@(col.Name)", _@(tablename).@(col.Name));
+                    // p@(col.Name).SqlDbType = System.Data.SqlDbType.Udt;
+                    // p@(col.Name).UdtTypeName = "@(col.MappedDataType.DatabaseType)";
+                    parameters.Add(p@(col.Name));
+                </text>
+            }
+            else
+            {
+                if (col.MappedDataType.CodeType == "string" && !col.IsNullable)
+                {
+                    @:            parameters.Add(db.GetParameter("@(Html.Raw("@"))@(col.Name)", _@(tablename).@(col.Name) ?? ""));
+                }
+                else if (col.MappedDataType.CodeType == "DateTime" && !col.IsNullable)
+                {
+                    @:            parameters.Add(db.GetParameter("@(Html.Raw("@"))@(col.Name)", Data.DateTimeToSQLMin(_@(tablename).@(col.Name))));
+                }
+                else if (col.MappedDataType.CodeType == "DateTimeOffset" && !col.IsNullable)
+                {
+                    @:            parameters.Add(db.GetParameter("@(Html.Raw("@"))@(col.Name)", Data.DateTimeOffsetToSQLMin(_@(tablename).@(col.Name))));
+                }
+                else
+                {
+                    @:            parameters.Add(db.GetParameter("@(Html.Raw("@"))@(col.Name)", _@(tablename).@(col.Name)));
+                }
+            }
+        }
+        <text>
+            if(_@(tablename).@(table.Id.Name) == 0)
+            {
+            int rowsaff = db.ExecuteNonQuery(SQLStrings.@(tablename)_Insert, parameters, CommandType.Text);
+            _@(tablename).@(table.Id.Name) = (@(table.Id.MappedDataType.CodeType))paramId.Value;
+            return rowsaff;
+            }
+            else
+            {
+            return db.ExecuteNonQuery(SQLStrings.@(tablename)_Update, parameters, CommandType.Text);
+            }
+            }
+        </text>
+        <text>        public static int @(tablename)_Delete(int Id)
+            {
+            SQLServerDatabase db = GetDB();
+            @(Html.Raw(codenewParatersDef))
+        </text>
+        foreach (var pkCol in table.PrimaryKeys)
+        {
+            string pkname = pkCol.Name;
+            <text>
+                IDbDataParameter param@(pkname) = new SqlParameter();
+                param@(pkname).ParameterName = "@(Html.Raw("@"))@(pkname)";
+                param@(pkname).Value = @(pkname);
+                parameters.Add(param@(pkname));
+            </text>
+        }
+        <text>
+            return db.ExecuteNonQuery(SQLStrings.@(tablename)_Delete, parameters, CommandType.Text);
+            }
+        </text>
+        if (table.OneToManyList.Count > 0)
+        {
+            //get the one
+
+        }
+        foreach (var oneToMany in table.OneToManyList)
+        {
+            string paramsList = "";
+            //foreach (var pkCol in oneToMany.OneTable.PrimaryKeys)
+            //{
+            //    if(paramsList.Length > 0)
+            //    {
+            //        paramsList = paramsList + ",";
+            //    }
+            //    paramsList = pkCol.MappedDataType.CodeType + " " + pkCol.Name;
+            //}
+
+            //LinkerTable = oneToMany.Table = AuthUsersAndAuthRoles
+            //oneToMany.Foreign_Keys[0].ForeignTable.Name = AuthUsers
+            //oneToMany.OneTable = AuthUsers
+            //oneToMany.ManyTable = AuthRoles
+
+            //find the foreign key, that points to the OneTable from the Linker Table
+            DBForeignKey fkOne = null;
+            DBForeignKey fkMany = null;
+
+            foreach (var fk in oneToMany.LinkerTable.Foreign_Keys)
+            {
+                if (oneToMany.OneTable.Name == fk.ForeignTable.Name)
+                {
+                    fkOne = fk;
+                    //get the column name of the oneToMany.Table
+                    if (paramsList.Length > 0)
+                    {
+                        paramsList = paramsList + ",";
+                    }
+                    paramsList = fk.Column.MappedDataType.CodeType + " " + fk.Column.Name;
+                }
+                else
+                {
+                    fkMany = fk;
+                }
+            }
+            <text>
+                public static List@(Html.Raw("<"))@(oneToMany.LinkerTable.Name)@(Html.Raw(">")) @(oneToMany.LinkerTable.Name)By@(oneToMany.OneTable.Name)_Get(@(paramsList))
+                {
+                var db = GetDB();
+                var parameters = new List@(Html.Raw("<"))IDbDataParameter@(Html.Raw(">"))();
+            </text>
+            if (fkOne != null)
+            {
+                @:              parameters.Add(db.GetParameter("@(Html.Raw("@"))@(fkOne.Column.Name)", @(fkOne.Column.Name)));
+            }
+            <text>
+                return @(oneToMany.LinkerTable.Name)_Get(db.GetDataReader(@(Html.Raw("@"))"@(Html.Raw(oneToMany.SQL_Linker))", parameters));
+                }
+
+                public static List@(Html.Raw("<"))@(oneToMany.ManyTable.Name)@(Html.Raw(">")) @(oneToMany.ManyTable.Name)By@(oneToMany.OneTable.Name)_Get(@(paramsList))
+                {
+                var db = GetDB();
+                var parameters = new List@(Html.Raw("<"))IDbDataParameter@(Html.Raw(">"))();
+            </text>
+            if (fkOne != null)
+            {
+                @:              parameters.Add(db.GetParameter("@(Html.Raw("@"))@(fkOne.Column.Name)", @(fkOne.Column.Name)));
+            }
+            <text>
+                return @(oneToMany.ManyTable.Name)_Get(db.GetDataReader(@(Html.Raw("@"))"@(Html.Raw(oneToMany.SQL_Many))", parameters));
+                }
+            </text>
+        } //end many
+        @:        #endregion
+    } //end tables loop
+}
+    }//end DataAccess
+}//end namespace
+

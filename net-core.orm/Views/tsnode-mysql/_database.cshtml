@@ -1,0 +1,160 @@
+﻿@using CoreORM
+@model DBDatabase
+//Do not modify. v1.0
+//Code generated using custom ORM Mapper on @DateTime.Now
+
+import * as mysql2 from "mysql2/promise";
+import * as m from "./_models";
+import * as s from "./_sqlstrings";
+import * as i from './_interfaces';
+export * as _interfaces from './_interfaces';
+
+export class SqlConfig {
+    user: string = "dbusername";
+    password: string = "dbpassword";
+    server: string = "localhost";
+    database: string = "dbname";
+}
+
+export class Database {
+
+    SQLCONFIG = new SqlConfig();
+    CONNECTION : mysql2.PoolConnection | null = null;
+    POOL : mysql2.Pool | null = null;
+
+    async CreatePool() {
+        this.POOL = mysql2.createPool({
+            host     : this.SQLCONFIG.server,
+            user     : this.SQLCONFIG.user,
+            password : this.SQLCONFIG.password,
+            database : this.SQLCONFIG.database,
+            waitForConnections: true,
+            connectionLimit: 10,
+            queueLimit: 0,
+            namedPlaceholders: true,
+            timezone: "UTC",
+            typeCast: function (field, next) {
+                if (field.type == "DECIMAL" || field.type == "NEWDECIMAL") {
+                    var value = field.string();
+                    return (value === null) ? null : Number(value);
+                }
+                return next();
+            }
+        });
+    }
+
+    async Connect(): Promise@(Html.Raw("<"))mysql2.Connection> {
+        try {
+            if(this.CONNECTION == null){
+                var pool = mysql2.createPool({
+                    host     : this.SQLCONFIG.server,
+                    user     : this.SQLCONFIG.user,
+                    password : this.SQLCONFIG.password,
+                    database : this.SQLCONFIG.database,
+                    waitForConnections: true,
+                    connectionLimit: 10,
+                    queueLimit: 0
+                });
+                this.CONNECTION = await pool.getConnection();
+                this.CONNECTION.config.namedPlaceholders = true;
+                await this.CONNECTION.connect();
+            }
+            return this.CONNECTION;
+        } catch (e: any) {
+          throw e;
+        }
+    }
+    async QueryRows(sql: string, params : any) : Promise@(Html.Raw("<"))Array@(Html.Raw("<"))any>> {
+        try {
+            let [result] = await this.POOL.query(sql, params);
+            return result as Array@(Html.Raw("<"))any>;
+        } catch (e: any) {
+            throw e;
+        }
+    }
+    async Execute(sql: string, params: any): Promise@(Html.Raw("<"))m.DBResult> {
+        const r = new m.DBResult();
+        try {
+            let [result] = await this.POOL.execute(sql, params);
+            r.RowsAffected = (result as any).affectedRows;
+            r.Valid = true;
+            if((result as any).insertId) {
+                r.Id = (result as any).insertId;
+            }
+        } catch (e: any) {
+            throw e;
+        }
+        return r;
+    }
+@foreach (var table in Model.Tables)
+{
+    string tablename = table.Name;
+
+    string pkFunctionArgs = "";
+    string pkJSObj = "";
+    string pkFunctionParams = "";
+    string listDef = "List<" + tablename + "> list = new List<" + tablename + ">();";
+
+    foreach (var pkCol in table.PrimaryKeys)
+    {
+        //get params
+        if (pkFunctionArgs.Length > 0)
+        {
+            pkFunctionArgs = pkFunctionArgs + ", ";
+            pkFunctionParams = pkFunctionParams + ", ";
+            pkJSObj = pkJSObj + ", ";
+        }
+        pkFunctionArgs += pkCol.Name + ":" + pkCol.MappedDataType.JSCodeType;
+        pkFunctionParams += " " + pkCol.Name;
+        pkJSObj += pkCol.Name + ":" + pkCol.Name;
+    }
+
+    <text>
+        async Get@(tablename)(@(pkFunctionArgs)): Promise@(Html.Raw("<"))i.I@(tablename) | null> {
+        try {
+        //let p = await this.Connect();
+        let [rows, fields] = await this.POOL.query(s.SQLStrings.@(tablename)_Select, {@(pkJSObj)});
+        var results = rows as Array@(Html.Raw("<"))any>;
+        if (results.length > 0) {
+        return (results[0] as any) as i.I@(tablename);
+        }
+        return null;
+        } catch (e:any) {
+        throw e;
+        }
+        }
+        async Save@(tablename)(isnew: boolean | null, _@(tablename): i.I@(tablename)) : Promise@(Html.Raw("<"))m.DBResult@(Html.Raw(">")) {
+        const r = new m.DBResult();
+        try {
+        //let p = await this.Connect();
+        var result : any;
+        if((isnew == null && _@(tablename).Id == 0) || isnew == true) {
+        [result] = await this.POOL.execute(s.SQLStrings.@(tablename)_Insert, _@(tablename));
+        _@(tablename).@(table.Id.Name) = (result as any).insertId;
+        } else {
+        [result] = await this.POOL.execute(s.SQLStrings.@(tablename)_Update, _@(tablename));
+        }
+        r.Id = _@(tablename).@(table.Id.Name);
+        r.RowsAffected = (result as any).affectedRows;
+        r.Valid = true;
+        } catch (e:any) {
+        throw e;
+        }
+        return r;
+        }
+        async Delete@(tablename)(@(pkFunctionArgs)) : Promise@(Html.Raw("<"))m.DBResult@(Html.Raw(">")) {
+        const r = new m.DBResult();
+        try {
+        //let p = await this.Connect();
+        //var result : any;
+        let [result] = await this.POOL.execute(s.SQLStrings.@(tablename)_Delete, {@(pkJSObj)});
+        r.RowsAffected = (result as any).affectedRows;
+        r.Valid = true;
+        } catch (e:any) {
+        throw e;
+        }
+        return r;
+        }
+    </text>
+}
+}

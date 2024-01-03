@@ -1,0 +1,166 @@
+﻿@using CoreORM
+@model DBDatabase
+using System;
+using System.Collections.Generic;
+using System.Text;
+
+//Do not modify. v1.0
+//Code generated using custom ORM Mapper on @DateTime.Now
+namespace @(Model.CodeNameSpace)
+{
+    public partial interface IModel
+    {
+    }
+@{
+    foreach (var table in Model.Tables)
+    {
+        string tablename = table.Name;
+        string pkname = table.Id.Name;
+<text>    public partial class @(tablename): @(tablename)Model, IModel
+    {
+    }
+    public partial interface I@(tablename)
+    {
+</text>
+        foreach (var col in table.Columns)
+        {
+@:        public @(col.MappedDataType.CodeType) @(col.Name) { get; set; }
+        }//end for each columns
+<text>
+    }
+    public abstract partial class @(tablename)Model: I@(tablename)
+    {</text>
+        foreach(var oneToMany in table.OneToManyList)
+        {   
+<text>            List@(Html.Raw("<"))@(oneToMany.ManyTable.Name)@(Html.Raw(">")) _ModelsOf_@(oneToMany.ManyTable.Name) = null;
+            public virtual List@(Html.Raw("<"))@(oneToMany.ManyTable.Name)@(Html.Raw(">")) ModelsOf_@(oneToMany.ManyTable.Name)
+            {
+                get
+                {
+                    if(_ModelsOf_@(oneToMany.ManyTable.Name) == null)
+                    {
+                        _ModelsOf_@(oneToMany.ManyTable.Name) = DataAccess.@(oneToMany.ManyTable.Name)By@(table.Name)_Get(@(table.PrimaryKeys[0].Name));
+                    }
+                    return _ModelsOf_@(oneToMany.ManyTable.Name);
+                }
+                set
+                {
+                    _ModelsOf_@(oneToMany.ManyTable.Name) = value;                    
+                }
+            }
+</text>
+        }
+
+        foreach(var fk in table.Foreign_Keys)
+        {
+            string pklist = "";
+
+            foreach(var pk in fk.ForeignTable.PrimaryKeys)
+            {
+                if(pklist.Length > 0)
+                {
+                    pklist = pklist + ",";
+                }
+                pklist += pk.Name;
+            }
+
+            <text>
+        
+        @(fk.ForeignTable.Name) _ModelFor_@(fk.Column.Name) = null;
+        public virtual @(fk.ForeignTable.Name) ModelFor_@(fk.Column.Name)
+        {   
+            get
+            {
+                if(_ModelFor_@(fk.Column.Name) == null)                                
+                {
+                    _ModelFor_@(fk.Column.Name) = DataAccess.@(fk.ForeignTable.Name)_Get(@(pklist));
+                }
+                return _ModelFor_@(fk.Column.Name);
+            }
+            set
+            {
+                _ModelFor_@(fk.Column.Name) = value;
+            }
+        }
+    </text>
+        }
+        var colDateCreated = table.Columns.Where(i => i.Name == "DateCreated").FirstOrDefault();
+        var colDateModified = table.Columns.Where(i => i.Name == "DateModified").FirstOrDefault();
+        var colUserIdCreated = table.Columns.Where(i => i.Name == "UserIdCreated").FirstOrDefault();
+        var colUserIdModified = table.Columns.Where(i => i.Name == "UserIdModified").FirstOrDefault();        
+        
+        foreach (var col in table.Columns)
+        {<text>
+        public @(col.MappedDataType.CodeType) @(col.Name) { get; set; }</text>
+        }//end for each columns
+        <text>
+        public virtual ErrorList Validate()
+        {
+            return new ErrorList();            
+        }
+        public virtual bool Save(int savedByUserid = 0)
+        {
+</text>
+
+        @if(colDateCreated != null)
+        {
+<text>            if(this.DateCreated == DateTimeOffset.MinValue)
+            {
+                this.DateCreated = DateTimeOffset.UtcNow;
+            }</text>
+        }
+
+        if(colDateModified != null)
+        {
+<text>            if(this.DateModified == DateTimeOffset.MinValue)
+            {
+                this.DateModified = DateTimeOffset.UtcNow;
+            }
+</text>
+        }
+
+        @if (colUserIdCreated != null) {
+<text>            if (this.Id == 0 && this.UserIdCreated == 0)
+            {
+                this.UserIdCreated = savedByUserid;
+            }
+</text>
+           }
+
+    @if (colUserIdModified != null)
+    {
+<text>
+        if (this.UserIdModified == 0)
+        {
+            this.UserIdModified = savedByUserid;
+        }
+</text>
+    }
+<text>
+            int rowsaff = DataAccess.@(tablename)_Save(this);
+            if (rowsaff > 0)
+            {
+                return true;
+            }
+            return false;
+        }
+    }
+</text>
+    } //end tables loop
+<text>    
+    public static class SQLStrings
+    {</text>
+    foreach (var table in Model.Tables)
+    {
+        string tablename = table.Name;
+        string pkname = table.Id.Name;
+        <text>        
+        public const string @(tablename)_Insert = "@(table.SQL_Insert) @(table.SQL_ScopeId)";
+        public const string @(tablename)_Select = "@(table.SQL_Select)";
+        public const string @(tablename)_Update = "@(table.SQL_Update)";
+        public const string @(tablename)_Delete = "@(table.SQL_Delete)";
+</text>
+    }
+}
+    }
+}

@@ -1,0 +1,15 @@
+﻿@using CoreORM
+@model DBDatabase
+//Do not modify. v1.0
+//Code generated using custom ORM Mapper on @DateTime.Now
+
+export class SQLStrings {
+@foreach (var table in Model.Tables)
+    {
+
+@:        static @(table.Name)_Insert: string = " @(table.SQL_Insert) @(table.SQL_ScopeId)";
+@:        static @(table.Name)_Select: string = " @(table.SQL_Select)";
+@:        static @(table.Name)_Update: string = " @(table.SQL_Update)";
+@:        static @(table.Name)_Delete: string = " @(table.SQL_Delete)";
+    }
+}

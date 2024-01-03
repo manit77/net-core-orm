@@ -1,0 +1,104 @@
+﻿@using CoreORM
+@model DBDatabase
+//Do not modify. v1.0
+//Code generated using custom ORM Mapper on @DateTime.Now
+import sql, { IResult } from "mssql";
+import * as d from "./_database";
+
+export class Procedures {
+constructor(private d: d.Database){ }
+@{    
+    foreach (var sp in Model.Procedures)
+    {
+        string functionParams = "";
+        string spname = sp.Name.ToLower();
+        bool isSearchOrGet = false;
+        bool isFunction = false;
+        bool isScalar = false;
+        string codeSQLCall = sp.Name;
+        string sqlFunctioncallparamlist = ""; //used to generate the sql params list
+        
+
+        if (spname.StartsWith("search") || spname.StartsWith("get"))
+        {
+            isSearchOrGet = true;
+
+            if (sp.Type.ToLower() == "function")
+            {
+                isFunction = true;
+            }
+        }
+
+        if (isFunction)
+        {
+            continue;
+        }
+
+        var paramsSorted = (from i in sp.Paramaters orderby i.IsOutPut descending, i.Index select i);
+        foreach (var p in paramsSorted)
+        {
+            if (sqlFunctioncallparamlist.Length > 0)
+            {
+                sqlFunctioncallparamlist = sqlFunctioncallparamlist + ", ";
+            }
+
+            sqlFunctioncallparamlist += "@" + p.Name; // + "= @i" + p.Name;
+
+
+            if (functionParams.Length > 0)
+            {
+                functionParams = functionParams + ", ";
+            }
+
+            if (p.IsOutPut)
+            {
+                functionParams +=  p.Name + ": " + p.MappedDataType.JSCodeType;
+            }
+            else
+            {
+                if (p.IsNullable)
+                {
+                    functionParams += p.Name + ": " + p.MappedDataType.JSCodeType + " | null";
+                }
+                else
+                {
+                    functionParams += p.Name + ": " + p.MappedDataType.JSCodeType;
+                }
+
+                if (p.DefaultValue.Length > 0)
+                {
+                    //functionParams += " = " + p.DefaultValue;
+                }
+            }
+        }
+
+
+        if (functionParams.Length > 0){
+@:    async @(sp.Name)(params: { @(Html.Raw(functionParams)) }): Promise@(Html.Raw("<"))Array@(Html.Raw("<"))any@(Html.Raw(">>")) {
+} else{
+@:    async @(sp.Name)(): Promise@(Html.Raw("<"))Array@(Html.Raw("<"))any@(Html.Raw(">>")) {
+}
+<text>        try {
+            let p = await this.d.Connect();
+            let rq = p.request();
+</text>foreach (var p in sp.Paramaters){
+    string pname = p.Name;
+    if (p.IsOutPut)
+    {
+@:            rq.output('@(pname)', params.@(pname) as any);
+    } else {
+@:            rq.input('@(pname)', params.@(pname));
+    }
+        }//end foreach paramaters
+<text>            
+            let result = await rq.execute('@(sp.Name)');
+            // console.log(result.recordset);
+            return result.recordset;       
+        } catch (e:any) {
+            throw Error(e.message);
+        }
+    }
+</text>       
+} //end Procedures loop
+} 
+}

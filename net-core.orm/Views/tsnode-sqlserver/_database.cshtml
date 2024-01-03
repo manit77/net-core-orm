@@ -1,0 +1,178 @@
+﻿@using CoreORM
+@model DBDatabase
+//Do not modify. v1.0
+//Code generated using custom ORM Mapper on @DateTime.Now
+
+import sql, { IRecordSet } from "mssql";
+import { isArray } from "lodash";
+import * as m from "./_models";
+import * as s from "./_sqlstrings";
+import * as i from './_interfaces';
+import * as u from '../utilities';
+export * as _interfaces from './_interfaces';
+
+export class SqlConfig {
+    user: string = "dbusername";
+    password: string = "dbpassword";
+    server: string = "localhost"; // You can use 'localhost\\instance' to connect to named instance
+    database: string = "dbname";
+
+    pool: any = {
+        max: 10,
+        min: 0,
+        idleTimeoutMillis: 30000
+    }
+    options: any = {
+        encrypt: false,
+        trustServerCertificate: true
+    }
+}
+
+export class Database {
+
+    SQLCONFIG = new SqlConfig();
+
+    async Connect(): Promise@(Html.Raw("<"))sql.ConnectionPool@(Html.Raw(">")) {
+        try {
+            return await new sql.ConnectionPool(this.SQLCONFIG).connect();
+        } catch (e:any) {
+          var nE = new Error(e.message);
+          throw nE;
+        }
+    }   
+
+    async QueryRows(sql: string, params ? : { name: string, value: any }  | [{ name: string, value: any }] ) : Promise<IRecordSet<any>> {
+        try{
+            let p = await this.Connect();
+            let rq = p.request();
+            if(params){
+                if(isArray(params)){
+                    params.forEach(element => {
+                        rq.input(element.name, element.value);
+                    });
+                } else {
+                    //single object
+                    rq.input(params.name, params.value);
+                }
+            }
+
+            let result = await rq.query(sql);
+
+            return result.recordset;
+
+        } catch (e:any) {
+            var nE = new Error(e.message);
+            throw nE;
+        }        
+    }
+@foreach (var table in Model.Tables)
+{
+    string tablename = table.Name;
+
+    string pkFunctionArgs = "";
+    string pkFunctionParams = "";
+    string listDef = "List<" + tablename + "> list = new List<" + tablename + ">();";
+
+    foreach (var pkCol in table.PrimaryKeys)
+    {
+        //get params
+        if (pkFunctionArgs.Length > 0)
+        {
+            pkFunctionArgs = pkFunctionArgs + ", ";
+            pkFunctionParams = pkFunctionParams + ", ";
+        }
+        pkFunctionArgs += pkCol.Name + ":" + pkCol.MappedDataType.JSCodeType;
+        pkFunctionParams += " " + pkCol.Name;
+    }
+
+<text>
+    async Get@(tablename)(@(pkFunctionArgs)): Promise@(Html.Raw("<"))i.I@(tablename) | null@(Html.Raw(">")) {
+        try{
+            let p = await this.Connect();
+            let rq = p.request();
+@{ foreach (var pkCol in table.PrimaryKeys)
+    {
+        string pkname = pkCol.Name;
+@:            rq.input('@(pkname)', @(pkname));
+    }
+}
+            let result = await rq.query(s.SQLStrings.@(tablename)_Select);
+            if (result.recordset.length > 0) {
+                return result.recordset[0] as i.I@(tablename);
+            }
+        } catch (e:any) {
+            var nE = new Error(e.message);
+            throw nE;
+        }
+        return null;
+    }
+
+ async Save@(tablename)(isnew: boolean | null, _@(tablename): i.I@(tablename)) : Promise@(Html.Raw("<"))m.DBResult@(Html.Raw(">")) {
+        const r = new m.DBResult();
+        try{
+            let p = await this.Connect();
+            let rq = p.request();
+@{
+    if (table.Id != null)
+    {
+@:              rq.output('Id', sql.Int, _@(tablename).Id);
+
+    }
+    foreach (var col in table.Columns.Where(i => i.IsIdentity == false))
+    {
+        if(col.Name == "DateCreated"){
+@:              rq.input("@(col.Name)", new Date());
+        } else {
+@:              rq.input("@(col.Name)", _@(tablename).@(col.Name));
+        }
+    }
+}
+            let rs : sql.IResult@(Html.Raw("<"))any@(Html.Raw(">"));
+
+          if((isnew == null || _@(tablename).Id == 0) || isnew == true){
+              rs = await rq.query(s.SQLStrings.@(tablename)_Insert);
+@{
+    if (table.Id != null)
+    {
+@:              _@(tablename).Id = rs.output.Id;
+    }
+}
+            } else {
+                rs = await rq.query(s.SQLStrings.@(tablename)_Update);
+            }
+            r.RowsAffected = rs.rowsAffected[0];
+            r.Valid = true;
+@{
+    if (table.Id != null)
+    {
+@:            r.Id = _@(tablename).Id;
+    }
+}
+        } catch (e:any) {
+            var nE = new Error(e.message);
+            throw nE;
+        }
+        return r;
+    }
+
+    async Delete@(tablename)(@(pkFunctionArgs)) : Promise@(Html.Raw("<"))m.DBResult@(Html.Raw(">")) {
+    const r = new m.DBResult();
+        try {
+            let p = await this.Connect();
+            let rq = p.request();
+            rq.input('Id', sql.Int, Id);
+            let rs : sql.IResult@(Html.Raw("<"))any@(Html.Raw(">"));
+            if(Id > 0){
+                rs = await rq.query(s.SQLStrings.@(tablename)_Delete);
+                r.Valid = true;
+                r.RowsAffected = rs.rowsAffected[0];
+            }
+        } catch (e:any) {
+            var nE = new Error(e.message);
+            throw nE;
+        }
+        return r;
+    }
+</text>
+ }
+}

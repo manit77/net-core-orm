@@ -1,0 +1,113 @@
+﻿@using CoreORM
+@using System.Linq
+@using System.Data
+@model DBDatabase
+@{
+    //get enums list
+    var dtGroups = Model.DB.GetDataTable("SELECT distinct DataGroup FROM EnumsList ORDER BY DataGroup");
+    System.Data.DataTable dtEnumsList = Model.DB.GetDataTable("SELECT Id, DataGroup, DataText, DataDescription, DisplayText, Sequence FROM EnumsList ORDER BY DataGroup, DataText");
+
+    System.Data.DataTable dtAuthRoles = Model.DB.GetDataTable("SELECT * FROM AuthRoles");
+
+    bool ServerSideCode = true;
+
+}
+//Do not modify. v1.0
+//Code generated using custom ORM Mapper on @DateTime.Now
+@{
+    if(Model.param0 != null)
+    {
+        if (Model.param0 is string && (string)Model.param0 == "clientside")
+        {
+            ServerSideCode = false;
+        }
+    }
+
+    if (ServerSideCode)
+    {
+@:import * as m from './_models'
+@:
+@:export class EnumsList extends m.EnumsList{
+@:  constructor(desc: string, dgrp: string, dtxt: string, disptxt: string, id: number){
+@:  super(null);
+@:  this.DataDescription = desc;
+@:  this.DataGroup = dgrp;
+@:  this.DataText = dtxt;
+@:  this.DisplayText = disptxt;
+@:  this.Id = id;
+@:  }
+@:}
+    } else {
+@:export class EnumsList {
+@:
+@:  DataDescription = "";
+@:  DataGroup = "";
+@:  DataText = "";
+@:  DisplayText = "";
+@:  Id = 0;
+@:
+@:  constructor(desc: string, dgrp: string, dtxt: string, disptxt: string, id: number) {
+@:      this.DataDescription = desc;
+@:      this.DataGroup = dgrp;
+@:      this.DataText = dtxt;
+@:      this.DisplayText = disptxt;
+@:      this.Id = id;
+@:  }
+@:}
+    }
+}
+
+export const EnumsAll = {
+@{
+    //dataTable.DefaultView.ToTable(true, "employeeid");
+    foreach (System.Data.DataRow drEnum in dtEnumsList.DefaultView.ToTable(true, "DataGroup").AsEnumerable().OrderBy(r => r.Field<string>("DataGroup")))
+    {
+    @:@(drEnum["DataGroup"]) : [
+
+        foreach (System.Data.DataRow drEnum2 in dtEnumsList.Select("DataGroup='" + drEnum["DataGroup"] + "'")) {
+        @:new EnumsList("@(drEnum2["DataDescription"])",  "@(drEnum2["DataGroup"])", "@(drEnum2["DataText"])", "@(drEnum2["DisplayText"])", @(drEnum2["Id"]) ),
+}    
+    @:] as Array@(Html.Raw("<"))EnumsList@(Html.Raw(">")),
+    }
+}
+} as const;
+
+export class EnumValues{
+@{
+    foreach (System.Data.DataRow drEnum in dtEnumsList.Rows) {
+@:  static @(drEnum["DataGroup"])_@(((string)drEnum["DataText"]).Replace(".", ""))  = new EnumsList("@(drEnum["DataDescription"])",  "@(drEnum["DataGroup"])", "@(drEnum["DataText"])", "@(drEnum["DisplayText"])", @(drEnum["Id"]) );
+}
+}
+}
+
+export class EnumNames {
+@{
+    
+    foreach (System.Data.DataRow drEnum in dtGroups.Rows)
+    {
+@:  static @(drEnum["DataGroup"])  = "@(drEnum["DataGroup"])";
+    }
+}
+}
+
+interface IAuthRole {
+    id : number,
+    name : string,
+    description : string,
+    rank : number
+}
+
+export const AuthRoleAlls = {
+@{
+    foreach (System.Data.DataRow dr in dtAuthRoles.Rows)
+    {
+@:@(dr["Name"]) : {
+@:    id: @(dr["Id"]),
+@:    name: "@(dr["Name"])",
+@:    description: "@(dr["Description"])",
+@:    rank: @(dr["rank"])
+@:    } as IAuthRole,
+    }
+@:} as const;    
+} 
+

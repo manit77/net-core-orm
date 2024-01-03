@@ -1,0 +1,105 @@
+﻿@using CoreORM
+@model DBDatabase
+<!-- Code generated using custom ORM Mapper on @DateTime.Now -->
+<style>
+    table {
+        border-collapse: collapse;
+    }
+
+    table, th, td {
+        border: 1px solid black;
+    }
+
+    .indent-50 {
+        text-indent: 50px;
+    }
+
+        .indent-50 table {
+            margin-left: 50px;
+        }
+</style>
+<h1> @Model.Name</h1>
+@{
+    @:<h2>Tables</h2><div class="indent-50">
+        foreach (DBTable table in Model.Tables)
+        {
+            @:<h3>@(table.Name)</h3>
+            @:<table>
+                @:<tr><th>Name</th><th>Type</th><th>IsNullable</th><th>MaxLength</th><th>Precision</th><th>IsPrimaryKey</th><th>IsIdentity</th></tr>
+                foreach (DBColumn column in table.Columns)
+        {
+                    @:<tr>
+                        @:<td>@(column.Name)</td>
+                        @:<td>@(column.DBType)</td>
+                        @:<td>@(column.IsNullable)</td>
+                        @:<td>@(column.MaxLength)</td>
+                        @:<td>@(column.Precision)</td>
+                        @:<td>@(column.IsPrimaryKey)</td>
+                        @:<td>@(column.IsIdentity)</td>
+                    @:</tr>
+                }
+
+            @:</table>
+        }
+    @:</div>
+    @:<h2>Views</h2><div class="indent-50">
+        foreach (DBTable table in Model.Views)
+        {
+            @:<h3>@(table.Name)</h3>
+            @:<table>
+                @:<tr><th>Name</th><th>Type</th><th>IsNullable</th><th>MaxLength</th><th>Precision</th></tr>
+                foreach (DBColumn column in table.Columns)
+        {
+                    @:<tr>
+                        @:<td>@(column.Name)</td>
+                        @:<td>@(column.DBType)</td>
+                        @:<td>@(column.IsNullable)</td>
+                        @:<td>@(column.MaxLength)</td>
+                        @:<td>@(column.Precision)</td>
+                    @:</tr>
+                }
+
+            @:</table>
+        }
+    @:</div>
+    @:<h2>Procedures</h2><div class="indent-50">
+        foreach (DBProcedure proc in Model.Procedures)
+        {
+            @:<h3>@(proc.Name)</h3>
+<text>
+                <table>
+                    <tr>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th>IsNullable</th>
+                        <th>MaxLength</th>
+                        <th>Precision</th>
+                        <th>IsOutPut</th>
+                        <th>HasDefault</th>
+                        <th>DefaultValue</th>
+                        <th>ParmDef</th>
+                    </tr>
+</text>
+        foreach (DBParamater paramater in proc.Paramaters)
+        {
+<text>              <tr>
+                    <td>@(paramater.Name)</td>
+                    <td>@(paramater.DBType)</td>
+                    <td>@(paramater.IsNullable)</td>
+                    <td>@(paramater.MaxLength)</td>
+                    <td>@(paramater.Precision)</td>
+                    <td>@(paramater.IsOutPut)</td>
+                    <td>@(paramater.HasDefaultValue)</td>
+                    <td>@(paramater.DefaultValue)</td>
+                    <td>@(paramater.DefParam)</td>
+                </tr>
+</text>
+        } //param
+
+@:</table>
+    }//endProcedures
+@:</div>
+}
+
+
+

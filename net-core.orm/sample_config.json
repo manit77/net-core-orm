@@ -1,0 +1,41 @@
+﻿[
+  {
+    "ConfigName": "tsnode-mysql",
+    "ConnectionString": "server=[servername];user=[user];password=[password];database=[dbname]",
+    "DatabaseType": "mysql",
+    "DBName": "[dbname]",
+    "DirOutDir": "f:\\temp",
+    "NameSpace": "",
+    "ViewsDirectory": "tsnode-mysql",
+    "RegExReplace": [
+      {
+        "FindRegEx": "\\.cshtml",
+        "Replace": ".ts"
+      }
+    ],
+    "PostProcessExec": "",
+    "PostProcessArgs": ""
+  },
+  {
+    "ConfigName": "netcore",
+    "ConnectionString": "server=[servername];user=[user];password=[password];database=[dbname]",
+    "DatabaseType": "mssql",
+    "DBName": "[dbname]",
+    "DirOutDir": "f:\\temp",
+    "NameSpace": "",
+    "ViewsDirectory": "netcore",
+    "RegExReplace": [
+      {
+        "FindRegEx": "\\.cshtml",
+        "Replace": ".cs"
+      }
+    ],
+    "PostProcess": [
+      {
+        "PostProcessExec": "dotnet",
+        "PostProcessArgs": "format",
+        "PostProcessWorkingDir": "f:\\temp"
+      }
+    ]
+  }
+]

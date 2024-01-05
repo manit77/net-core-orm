@@ -41,14 +41,19 @@ namespace CoreORM
                     }
                     else
                     {
+                        //get default
+                        var defaultConfig = configs.Where(i=> i.IsDefault).FirstOrDefault();
+
                         while (config == null)
                         {
-#if DEBUG
-                            var configname = "netcore-sqlserver"; // "tsnode -mysql";
-#else
-                            Console.WriteLine("Enter a config name:");
+                            Console.WriteLine($"Enter a config name: [{defaultConfig.ConfigName}]");
+                            
                             var configname = Console.ReadLine();
-#endif
+                            if (string.IsNullOrEmpty(configname))
+                            {
+                                configname = defaultConfig.ConfigName;
+                            }
+
                             config = configs.Where(i => i.ConfigName == configname).FirstOrDefault();
                             if (config != null)
                             {

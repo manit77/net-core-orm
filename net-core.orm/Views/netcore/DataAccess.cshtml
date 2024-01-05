@@ -15,16 +15,8 @@ using CoreUtils;
 namespace @(Model.CodeNameSpace)
 {
     public static partial class DataAccess
-    {
-        public static string ConnectionString {
-            get {
-                return System.Configuration.ConfigurationManager.ConnectionStrings["Default"].ConnectionString;
-            }
-        }
-        public static SQLServerDatabase GetDB()
-        {
-            return new SQLServerDatabase(ConnectionString);
-        }
+    {        
+        public static IDatabase DB { get; set; }
 @{
     @:        #region execute code
     @:        /*
@@ -80,7 +72,7 @@ namespace @(Model.CodeNameSpace)
             public static @(tablename) @(tablename)_Get(@(pkFunctionArgs))
             {</text>
         <text>            @(tablename) model = null;
-            SQLServerDatabase db = GetDB();
+            IDatabase db = DataAccess.DB;
             @(Html.Raw(codenewParatersDef))
         </text>
         foreach (var pkCol in table.PrimaryKeys)
@@ -222,7 +214,7 @@ namespace @(Model.CodeNameSpace)
         <text>
             public static int @(tablename)_Save(I@(tablename) _@(tablename))
             {
-            SQLServerDatabase db = GetDB();
+            IDatabase db = DataAccess.DB;
             @(Html.Raw(codenewParatersDef))
         </text>
 
@@ -266,7 +258,7 @@ namespace @(Model.CodeNameSpace)
                 }
                 else if (col.MappedDataType.CodeType == "DateTimeOffset" && !col.IsNullable)
                 {
-                    @:            parameters.Add(db.GetParameter("@(Html.Raw("@"))@(col.Name)", Data.DateTimeOffsetToSQLMin(_@(tablename).@(col.Name))));
+                    @:            parameters.Add(db.GetParameter("@(Html.Raw("@"))@(col.Name)", _@(tablename).@(col.Name)));
                 }
                 else
                 {
@@ -289,7 +281,7 @@ namespace @(Model.CodeNameSpace)
         </text>
         <text>        public static int @(tablename)_Delete(int Id)
             {
-            SQLServerDatabase db = GetDB();
+            IDatabase db = DataAccess.DB;
             @(Html.Raw(codenewParatersDef))
         </text>
         foreach (var pkCol in table.PrimaryKeys)
@@ -352,7 +344,7 @@ namespace @(Model.CodeNameSpace)
             <text>
                 public static List@(Html.Raw("<"))@(oneToMany.LinkerTable.Name)@(Html.Raw(">")) @(oneToMany.LinkerTable.Name)By@(oneToMany.OneTable.Name)_Get(@(paramsList))
                 {
-                var db = GetDB();
+                IDatabase db = DataAccess.DB;
                 var parameters = new List@(Html.Raw("<"))IDbDataParameter@(Html.Raw(">"))();
             </text>
             if (fkOne != null)
@@ -365,7 +357,7 @@ namespace @(Model.CodeNameSpace)
 
                 public static List@(Html.Raw("<"))@(oneToMany.ManyTable.Name)@(Html.Raw(">")) @(oneToMany.ManyTable.Name)By@(oneToMany.OneTable.Name)_Get(@(paramsList))
                 {
-                var db = GetDB();
+                IDatabase db = DataAccess.DB;
                 var parameters = new List@(Html.Raw("<"))IDbDataParameter@(Html.Raw(">"))();
             </text>
             if (fkOne != null)

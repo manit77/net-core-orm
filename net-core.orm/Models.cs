@@ -19,6 +19,7 @@ namespace CoreORM
     }
     public class ORMConfig
     {
+        public bool IsDefault { get; set; }
         public string ConfigName { get; set; }
         public string ConnectionString { get; set; }
         public string DBName { get; set; }

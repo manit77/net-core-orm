@@ -1,5 +1,6 @@
 ﻿[
   {
+    "IsDefault": false,
     "ConfigName": "tsnode-mysql",
     "ConnectionString": "server=[servername];user=[user];password=[password];database=[dbname]",
     "DatabaseType": "mysql",
@@ -17,6 +18,7 @@
     "PostProcessArgs": ""
   },
   {
+    "IsDefault" :  true,
     "ConfigName": "netcore",
     "ConnectionString": "server=[servername];user=[user];password=[password];database=[dbname]",
     "DatabaseType": "mssql",

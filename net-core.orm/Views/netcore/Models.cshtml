@@ -8,7 +8,7 @@ using System.Text;
 //Code generated using custom ORM Mapper on @DateTime.Now
 namespace @(Model.CodeNameSpace)
 {
-    public partial class ErrorList : List<string>
+    public class ErrorList : List<string>
     {
         public override string ToString()
         {
@@ -20,7 +20,7 @@ namespace @(Model.CodeNameSpace)
         }
     }
 
-    public partial interface IModel
+    public interface IModel
     {
         (bool, ErrorList) Validate();
         bool Save(int savedByUserid = 0);
@@ -36,11 +36,11 @@ namespace @(Model.CodeNameSpace)
         
         string tablename = table.Name;
         string pkname = table.Id.Name;
-<text>    public partial class @(tablename): @(tablename)Model, IModel
+<text>    public class @(tablename)Base: @(tablename)Model, IModel
     {
-    public void Set(AuthUsersModel model)
+    public void Set(object model)
     {
-        CoreUtils.Data.CopyProperties(this, model);
+        CoreUtils.Data.CopyProperties(model, this);
     }
     
     public virtual (bool, ErrorList) Validate()
@@ -75,7 +75,7 @@ namespace @(Model.CodeNameSpace)
       }
     }
     
-    public partial interface I@(tablename)
+    public interface I@(tablename)
     {
 </text>
         foreach (var col in table.Columns)
@@ -85,7 +85,7 @@ namespace @(Model.CodeNameSpace)
 
 @:  }
 <text>
-    public abstract partial class @(tablename)Model: I@(tablename)
+    public partial class @(tablename)Model: I@(tablename)
     {
 </text>
         foreach(var oneToMany in table.OneToManyList)

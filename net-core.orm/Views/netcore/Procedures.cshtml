@@ -15,47 +15,33 @@ namespace @(Model.CodeNameSpace)
 {
     public static partial class Procedures
     {
-        //public static partial class Procedures
-       //{
 @{
-    string codenewParatersDef = "List<IDbDataParameter> parameters = new List<IDbDataParameter>();";
     foreach (var sp in Model.Procedures)
     {
-        string functionParams = "";
-        string codeFunctionReturType = "void";
-        string codeFunctionCall = "GetDataTable";
-        string codeDataReturnType = "object";
-        string spname = sp.Name.ToLower();
-        bool isSearchOrGet = false;
-        bool isFunction = false;
-        bool isScalar = false;
+        string functionParams = "";        
+        string spname = sp.Name.ToLower();       
         string codeSQLCall = sp.Name;
         string sqlFunctioncallparamlist = ""; //used to generate the sql params list
         string codeSQLCommandType = "StoredProcedure";
+        bool isSearch = false;
+        bool isGet = false;
+        bool isSave = false;
+        string paramsCode = GetParamsCode(sp.Paramaters);
 
-
-        if (spname.StartsWith("search") || spname.StartsWith("get"))
+        if (spname.StartsWith("search"))
         {
-            isSearchOrGet = true;
-            codeFunctionReturType = "DataTable";
-            codeDataReturnType = "DataTable";
-            if (sp.Type.ToLower() == "function")
-            {
-                isFunction = true;
-
-                codeFunctionReturType = sp.MappedDataType.CodeType;
-                if (codeFunctionReturType == "DataTable")
-                {
-                    codeFunctionCall = "GetDataTable";
-                }
-                else
-                {
-                    isScalar = true;
-                    codeFunctionCall = "GetScalar";
-                    codeDataReturnType = "object";
-                }
-            }
+            isSearch = true;
         }
+
+        if (spname.StartsWith("get"))
+        {
+            isGet = true;
+        }
+
+        if (spname.StartsWith("save") || spname.StartsWith("update"))
+        {
+            isSave = true;
+        }      
 
         var paramsSorted = (from i in sp.Paramaters orderby i.IsOutPut descending, i.Index select i);
         foreach (var p in paramsSorted)
@@ -97,124 +83,70 @@ namespace @(Model.CodeNameSpace)
             }
         }
 
-        //this is a function that returns a datatable
-        if (isFunction && !isScalar)
-        {
-            codeSQLCall = "select * from " + sp.Schema + "." + sp.Name + "({sqlcallparamlist})";
-            //get paramlist for the select * from functionname (@p1=@ip1)
-            codeSQLCommandType = "Text";
-            codeSQLCall = codeSQLCall.Replace("{sqlcallparamlist}", sqlFunctioncallparamlist);
-        }
-        else
-        {
-            if (isScalar)
-            {
-                codeSQLCall = "select Value=" + sp.Schema + "." + sp.Name + "({sqlcallparamlist})";
-                //get paramlist for the select * from functionname (@p1=@ip1)
-                codeSQLCommandType = "Text";
-                codeSQLCall = codeSQLCall.Replace("{sqlcallparamlist}", sqlFunctioncallparamlist);
-            }
-        }
 
-        if (isSearchOrGet)
+        if (isSearch)
         {
-            @:        public static T @(Html.Raw(sp.Name + "<T>"))(@(Html.Raw(functionParams)))
+            //return IEnumerable
+            @:      public static IEnumerable@(Html.Raw("<T>" + sp.Name + "<T>"))(@(Html.Raw(functionParams))){
+            @:          string sql = "@(codeSQLCall)";
+            @(Html.Raw(paramsCode))
+            @:          return DataAccess.DB.Query@(Html.Raw("<T>"))(sql, parameters, CommandType.StoredProcedure);
+            @:      }
         }
-        else
+        else if (isGet)
         {
-            @:        public static @(codeFunctionReturType) @(sp.Name)(@(Html.Raw(functionParams)))
+            //return DataTable
+            @:      public static DataTable @(sp.Name + "_DT")(@(Html.Raw(functionParams))){
+            @:          string sql = "@(codeSQLCall)";
+            @(Html.Raw(paramsCode))
+            @:          return DataAccess.DB.GetDataTable(sql, @(sp.Paramaters.Count == 0 ? "null" : "parameters"), CommandType.@(codeSQLCommandType));
+            @:      }
+
+            //return as object
+            @:      public static IEnumerable@(Html.Raw("<T>" + sp.Name + "<T>"))(@(Html.Raw(functionParams))){
+            @:          string sql = "@(codeSQLCall)";
+            @(Html.Raw(paramsCode))
+            @:          return DataAccess.DB.Query@(Html.Raw("<T>"))(sql, parameters, CommandType.StoredProcedure);
+            @:      }
+
+        }        
+        else if (isSave)
+        {
+            //execute
+            @:      public static void @(sp.Name)(@(Html.Raw(functionParams))){
+            @(Html.Raw(paramsCode))
+            @:           DataAccess.DB.ExecuteNonQuery("@(codeSQLCall)", parameters, CommandType.@(codeSQLCommandType));
+            @:      }
         }
-        @:        {
-        foreach (var p in sp.Paramaters)
-        {
-
-            string pname = p.Name;
-            if (p.IsOutPut)
-            {
-                @:            @(pname) = @(p.MappedDataType.CodeTypeDefaultValue);
-            }
-        }
-
-        if (isSearchOrGet || isScalar)
-        {
-            @:            object rv = null;
-        }
-
-        if (sp.Paramaters.Count > 0)
-        {
-            @:            @(Html.Raw(codenewParatersDef))
-        }
-
-        @:            CoreUtils.IDatabase db = DataAccess.DB;
-        foreach (var p in sp.Paramaters)
-        {
-
-            string pname = p.Name;
-            if (p.IsOutPut)
-            {
-                @:            IDbDataParameter par@(pname) = db.GetParameterOut("@(Html.Raw("@"))@(pname)", @(pname), @(p.MappedDataType.CodeDBType), @(p.MaxLength));
-                @:            parameters.Add(par@(pname));
-                @:
-            }
-            else
-            {
-                @:            parameters.Add(db.GetParameter("@(Html.Raw("@"))@(pname)", @(pname)));
-            }
-        }//end foreach paramaters
-
-        if (isSearchOrGet)
-        {
-            <text>
-                if(typeof(T) == typeof(DataTable))
-                {
-                rv = db.GetDataTable("@(codeSQLCall)", @( sp.Paramaters.Count == 0? "null" : "parameters" ), CommandType.@(codeSQLCommandType));
-                }
-                else if (typeof(T) == typeof(SqlDataReader))
-                {
-                rv = db.GetDataReader("@(codeSQLCall)", @( sp.Paramaters.Count == 0? "null" : "parameters" ), CommandType.@(codeSQLCommandType));
-                }
-                else
-                {
-                Type type = typeof(T);
-                if (typeof(System.Collections.IEnumerable).IsAssignableFrom(type))
-                {
-                throw new Exception("Generic list is not support. Get SQLDataReader and convert to list.");
-                }
-                rv = db.Query<T>("@(codeSQLCall)", parameters, CommandType.StoredProcedure).FirstOrDefault();
-            </text>
-            @:          }
-            if (isSearchOrGet)
-            {
-                foreach (var p in sp.Paramaters)
-                {
-                    string pname = p.Name;
-                    if (p.IsOutPut)
-                    {
-                        @:            @(pname) = CoreUtils.Data.ParseIt@(Html.Raw("<"))@(p.MappedDataType.CodeType)@(Html.Raw(">"))(par@(pname).Value);
-                    }
-                }
-                @:            return (T)rv;
-            }
-            else
-            {
-                //scalar function returns rv
-                @:            return CoreUtils.Data.ParseIt<@(codeFunctionReturType)>(rv);
-                }
-            }
-            else
-            {
-                if (isScalar)
-                {
-                    @:          rv = db.GetScalar("@(codeSQLCall)", parameters, CommandType.@(codeSQLCommandType));
-                    @:          return rv;
-                }
-                //no out paramater just execute
-                @:           db.ExecuteNonQuery("@(codeSQLCall)", parameters, CommandType.@(codeSQLCommandType));
-            }
-            @:        }
-        } //end Procedures loop
+    }
 }
-        //}// end Procedures
-    }//end Procedures
-}//end namespace
+    }
+}
 
+@functions {
+    public string GetParamsCode(IEnumerable<DBParamater> paramaters)
+    {
+        string html = @"        List<IDbDataParameter> parameters = new List<IDbDataParameter>();";
+
+
+        foreach (var p in paramaters)
+        {
+
+            string pname = p.Name;
+            if (p.IsOutPut)
+            {
+                html += $@"
+IDbDataParameter par{pname} db.GetParameterOut(""@{pname}"", {pname}, {p.MappedDataType.CodeDBType}, {p.MaxLength});
+parameters.Add(par{pname});";
+
+            }
+            else
+            {
+                html += $@"
+parameters.Add(DataAccess.DB.GetParameter(""@{pname}"", {pname}));
+";
+            }
+        }
+        return html;
+    }
+}

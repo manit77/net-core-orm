@@ -8,14 +8,100 @@
     "DirOutDir": "f:\\temp",
     "NameSpace": "",
     "ViewsDirectory": "tsnode-mysql",
-    "RegExReplace": [
+    "Views": [
       {
-        "FindRegEx": "\\.cshtml",
-        "Replace": ".ts"
+        "ViewFileName": "_database.cshtml",
+        "ViewOutputFilePath": "F:\\temp\\autogen\\_database.ts",
+        "ViewParams": "",
+        "ViewPostProcess": [
+          {
+            "PostProcessExec": "C:\\Program Files\\nodejs\\tsfmt.cmd",
+            "PostProcessArgs": "-r _database.ts",
+            "PostProcessWorkingDir": "F:\\temp\\autogen"
+          }
+        ]
+      },
+      {
+        "ViewFileName": "_enums.cshtml",
+        "ViewOutputFilePath": "F:\\temp\\autogen\\_enums.ts",
+        "ViewParams": "",
+        "ViewPostProcess": [
+          {
+            "PostProcessExec": "C:\\Program Files\\nodejs\\tsfmt.cmd",
+            "PostProcessArgs": "-r _enums.ts",
+            "PostProcessWorkingDir": "F:\\temp\\autogen"
+          }
+        ]
+      },
+      {
+        "ViewFileName": "_enums.cshtml",
+        "ViewOutputFilePath": "F:\\temp\\autogen\\simEnums.ts_clientside",
+        "ViewParams": "clientside",
+        "ViewPostProcess": [
+          {
+            "PostProcessExec": "C:\\Program Files\\nodejs\\tsfmt.cmd",
+            "PostProcessArgs": "-r simEnums.ts_clientside",
+            "PostProcessWorkingDir": "F:\\temp\\autogen"
+          }
+        ]
+      },
+      {
+        "ViewFileName": "_interfaces.cshtml",
+        "ViewOutputFilePath": "F:\\temp\\autogen\\_interfaces.ts",
+        "ViewParams": "",
+        "ViewPostProcess": [
+          {
+            "PostProcessExec": "C:\\Program Files\\nodejs\\tsfmt.cmd",
+            "PostProcessArgs": "-r _interfaces.ts",
+            "PostProcessWorkingDir": "F:\\temp\\autogen"
+          }
+        ]
+      },
+      {
+        "ViewFileName": "_models.cshtml",
+        "ViewOutputFilePath": "F:\\temp\\autogen\\_models.ts",
+        "ViewParams": "",
+        "ViewPostProcess": [
+          {
+            "PostProcessExec": "C:\\Program Files\\nodejs\\tsfmt.cmd",
+            "PostProcessArgs": "-r _models.ts",
+            "PostProcessWorkingDir": "F:\\temp\\autogen"
+          }
+        ]
+      },
+      {
+        "ViewFileName": "_procedures.cshtml",
+        "ViewOutputFilePath": "F:\\temp\\autogen\\_procedures.ts",
+        "ViewParams": "",
+        "ViewPostProcess": [
+          {
+            "PostProcessExec": "C:\\Program Files\\nodejs\\tsfmt.cmd",
+            "PostProcessArgs": "-r _procedures.ts",
+            "PostProcessWorkingDir": "F:\\temp\\autogen"
+          }
+        ]
+      },
+      {
+        "ViewFileName": "_sqlstrings.cshtml",
+        "ViewOutputFilePath": "F:\\temp\\autogen\\_sqlstrings.ts",
+        "ViewParams": "",
+        "ViewPostProcess": [
+          {
+            "PostProcessExec": "C:\\Program Files\\nodejs\\tsfmt.cmd",
+            "PostProcessArgs": "-r _sqlstrings.ts",
+            "PostProcessWorkingDir": "F:\\temp\\autogen"
+          }
+        ]
       }
     ],
-    "PostProcessExec": "",
-    "PostProcessArgs": ""
+    "RegExReplace": null,
+    "PostProcess": [
+      {
+        "PostProcessExec": "robocopy",
+        "PostProcessArgs": "F:\\temp\\autogen F:\\source\\app\\src\\autogen",
+        "PostProcessWorkingDir": ""
+      }
+    ]
   },
   {
     "IsDefault" :  true,

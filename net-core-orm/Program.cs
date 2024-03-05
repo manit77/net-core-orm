@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Linq;
 using CommandLine;
 using static Org.BouncyCastle.Math.EC.ECCurve;
+using Microsoft.AspNetCore.Mvc;
 
 namespace CoreORM
 {
@@ -28,7 +29,9 @@ namespace CoreORM
         static void Main(string[] args)
         {
             List<ORMConfig> configs = new List<ORMConfig>();
-            string json = CoreUtils.IO.ReadFile(Path.Join(CoreUtils.IO.CurrentDirectory(), "config.json"));
+            string configPath = Path.Join(CoreUtils.IO.CurrentDirectory(), "config.json");
+            Console.WriteLine($"using config file: {configPath}");
+            string json = CoreUtils.IO.ReadFile(configPath);
             configs = Newtonsoft.Json.JsonConvert.DeserializeObject<List<ORMConfig>>(json);
 
             CommandLine.Parser.Default.ParseArguments<Options>(args)
@@ -46,7 +49,7 @@ namespace CoreORM
 
                         while (config == null)
                         {
-                            Console.WriteLine($"Enter a config name: [{defaultConfig.ConfigName}]");
+                            Console.WriteLine($"Enter a config name: [{defaultConfig?.ConfigName}]");
                             
                             var configname = Console.ReadLine();
                             if (string.IsNullOrEmpty(configname))
@@ -121,31 +124,74 @@ namespace CoreORM
 
             Console.WriteLine($"DirOutDir={config.DirOutDir}");
             Console.WriteLine($"ViewsDirectory={config.ViewsDirectory}");
+            Console.WriteLine($"ViewsCount={config.Views?.Count}");
 
-            var files = CoreUtils.IO.GetFiles(Path.Join(CoreUtils.IO.CurrentDirectory(), "Views", config.ViewsDirectory));
-            foreach (var razorFilePath in files)
+            if (config.Views != null)
             {
-                string newFileNamePath = string.Empty;
+                Console.WriteLine($"Executing using Views configs");
 
-                foreach (var findR in config.RegExReplace)
+                //process views provided in the config file
+                foreach (var view in config.Views)
                 {
-                    newFileNamePath = CoreUtils.Data.FindReplaceEx(razorFilePath, findR.FindRegEx, findR.Replace);
+                    string outfilepath = view.ViewOutputFilePath;
+                    string razorPath = "/Views/" + config.ViewsDirectory + "/" + view.ViewFileName;
+                    dbMap.param0 = "";
+
+                    if (!string.IsNullOrEmpty(view.ViewParams))
+                    {
+                        dbMap.param0 = view.ViewParams;
+                    }
+                    txt = renderer.RenderViewToStringAsync(razorPath, dbMap).GetAwaiter().GetResult();
+
+                    CoreUtils.IO.CreateTextFile(outfilepath, txt);
+                    Console.WriteLine($"Generated {outfilepath}");
+
+                    if (view.ViewPostProcess != null)
+                    {
+                        foreach (var postProcess in view.ViewPostProcess)
+                        {
+                            try
+                            {
+                                ExecPostProcess(postProcess);
+                            }
+                            catch (Exception ex)
+                            {
+                                Console.WriteLine("ERROR executing view post process:" + ex.ToString());
+                            }
+                        }
+                    }
                 }
 
-                var outfilepath = Path.Combine(config.DirOutDir, Path.GetFileName(newFileNamePath));
-
-                //absolute path of the razor view not the directory path
-                string razorPath = "/Views/" + config.ViewsDirectory + "/" + Path.GetFileName(razorFilePath);
-                txt = renderer.RenderViewToStringAsync(razorPath, dbMap).GetAwaiter().GetResult();
-
-                CoreUtils.IO.CreateTextFile(outfilepath, txt);
-                Console.WriteLine($"Generated {outfilepath}");
             }
-
-            if(config.PostProcess != null)
+            else
             {
-                foreach(var postProcess in config.PostProcess) {
+                Console.WriteLine($"Executing using Views Directory");
+                //process all views in the Views Directory
+                var files = CoreUtils.IO.GetFiles(Path.Join(CoreUtils.IO.CurrentDirectory(), "Views", config.ViewsDirectory));
+                foreach (var razorFilePath in files)
+                {
+                    string newFileNamePath = string.Empty;
 
+                    foreach (var findR in config.RegExReplace)
+                    {
+                        newFileNamePath = CoreUtils.Data.FindReplaceEx(razorFilePath, findR.FindRegEx, findR.Replace);
+                    }
+
+                    var outfilepath = Path.Combine(config.DirOutDir, Path.GetFileName(newFileNamePath));
+
+                    //absolute path of the razor view not the directory path
+                    string razorPath = "/Views/" + config.ViewsDirectory + "/" + Path.GetFileName(razorFilePath);
+                    txt = renderer.RenderViewToStringAsync(razorPath, dbMap).GetAwaiter().GetResult();
+
+                    CoreUtils.IO.CreateTextFile(outfilepath, txt);
+                    Console.WriteLine($"Generated {outfilepath}");
+                }
+            }
+            
+            if (config.PostProcess != null)
+            {
+                foreach (var postProcess in config.PostProcess)
+                {
                     try
                     {
                         ExecPostProcess(postProcess);
@@ -155,7 +201,7 @@ namespace CoreORM
                         Console.WriteLine("ERROR executing post process:" + ex.ToString());
                     }
                 }
-            }            
+            }
 
             Console.WriteLine($"Code Generation Done. {(DateTime.Now - startTime).TotalSeconds} secs");
         }
@@ -175,11 +221,17 @@ namespace CoreORM
                     Console.WriteLine($"Post Process starting: {postProcess.PostProcessExec} {postProcess.PostProcessArgs}");
 
                     process.OutputDataReceived += new DataReceivedEventHandler((object sender, DataReceivedEventArgs e) => {
-                        Console.Write(e.Data);
+                        if (!string.IsNullOrEmpty(e.Data))
+                        {
+                            Console.Write(e.Data);
+                        }
                     });
 
                     process.ErrorDataReceived += new DataReceivedEventHandler((object sender, DataReceivedEventArgs e) => {
-                        Console.WriteLine("ERROR:" + e.Data);
+                        if (!string.IsNullOrEmpty(e.Data))
+                        {
+                            Console.WriteLine("ERROR:" + e.Data);
+                        }
                     });
 
                     process.BeginOutputReadLine();

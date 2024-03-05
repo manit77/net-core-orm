@@ -31,7 +31,16 @@ namespace CoreORM
         public string ViewsDirectory { get; set; }
         public List<ORMConfigFindReplace> RegExReplace { get; set; }
         public List<ORMPostProcess> PostProcess { get; set; }
+        public List<ORMView> Views { get; set; }
 
+    }
+
+    public class ORMView
+    {
+        public string ViewFileName { get; set; }
+        public string ViewOutputFilePath { get; set; }
+        public string ViewParams { get; set; }
+        public List<ORMPostProcess> ViewPostProcess { get; set; }
     }
 
     public interface IDBMapper

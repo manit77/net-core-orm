@@ -25,20 +25,24 @@
 
     if (ServerSideCode)
     {
-@:import * as m from './_models'
+@:export class EnumDataItem {
 @:
-@:export class EnumsList extends m.EnumsList{
-@:  constructor(desc: string, dgrp: string, dtxt: string, disptxt: string, id: number){
-@:  super(null);
-@:  this.DataDescription = desc;
-@:  this.DataGroup = dgrp;
-@:  this.DataText = dtxt;
-@:  this.DisplayText = disptxt;
-@:  this.Id = id;
+@:  DataDescription = "";
+@:  DataGroup = "";
+@:  DataText = "";
+@:  DisplayText = "";
+@:  Id = 0;
+@:
+@:  constructor(desc: string, dgrp: string, dtxt: string, disptxt: string, id: number) {
+@:      this.DataDescription = desc;
+@:      this.DataGroup = dgrp;
+@:      this.DataText = dtxt;
+@:      this.DisplayText = disptxt;
+@:      this.Id = id;
 @:  }
 @:}
     } else {
-@:export class EnumsList {
+@:export class EnumDataItem {
 @:
 @:  DataDescription = "";
 @:  DataGroup = "";
@@ -65,9 +69,9 @@ export const EnumsAll = {
     @:@(drEnum["DataGroup"]) : [
 
         foreach (System.Data.DataRow drEnum2 in dtEnumsList.Select("DataGroup='" + drEnum["DataGroup"] + "'")) {
-        @:new EnumsList("@(drEnum2["DataDescription"])",  "@(drEnum2["DataGroup"])", "@(drEnum2["DataText"])", "@(drEnum2["DisplayText"])", @(drEnum2["Id"]) ),
+        @:new EnumDataItem("@(drEnum2["DataDescription"])",  "@(drEnum2["DataGroup"])", "@(drEnum2["DataText"])", "@(drEnum2["DisplayText"])", @(drEnum2["Id"]) ),
 }    
-    @:] as Array@(Html.Raw("<"))EnumsList@(Html.Raw(">")),
+    @:] as Array@(Html.Raw("<"))EnumDataItem@(Html.Raw(">")),
     }
 }
 } as const;
@@ -75,14 +79,13 @@ export const EnumsAll = {
 export class EnumValues{
 @{
     foreach (System.Data.DataRow drEnum in dtEnumsList.Rows) {
-@:  static @(drEnum["DataGroup"])_@(((string)drEnum["DataText"]).Replace(".", ""))  = new EnumsList("@(drEnum["DataDescription"])",  "@(drEnum["DataGroup"])", "@(drEnum["DataText"])", "@(drEnum["DisplayText"])", @(drEnum["Id"]) );
+@:  static @(drEnum["DataGroup"])_@(((string)drEnum["DataText"]).Replace(".", ""))  = new EnumDataItem("@(drEnum["DataDescription"])",  "@(drEnum["DataGroup"])", "@(drEnum["DataText"])", "@(drEnum["DisplayText"])", @(drEnum["Id"]) );
 }
 }
 }
 
 export class EnumNames {
-@{
-    
+@{    
     foreach (System.Data.DataRow drEnum in dtGroups.Rows)
     {
 @:  static @(drEnum["DataGroup"])  = "@(drEnum["DataGroup"])";
@@ -109,5 +112,5 @@ export const AuthRoleAlls = {
 @:    } as IAuthRole,
     }
 @:} as const;    
-} 
+}
 

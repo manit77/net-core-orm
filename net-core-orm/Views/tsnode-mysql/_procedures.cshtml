@@ -6,7 +6,7 @@ import * as d from "./_database";
 import { DBResult } from "./_models";
 
 export class Procedures {
-constructor(private d: d.Database){ }
+constructor(private d: d.DB){ }
 @{
     foreach (var sp in Model.Procedures)
     {
@@ -43,7 +43,7 @@ constructor(private d: d.Database){ }
             }
 
             sqlFunctioncallparamlist += "@" + p.Name; // + "= @i" + p.Name;
-            spParams += "@" + p.Name + " := :" + p.Name;
+            spParams += "@" + p.Name + " := :" + p.Name.Replace("_", "");
 
             if (functionParams.Length > 0)
             {
@@ -52,17 +52,17 @@ constructor(private d: d.Database){ }
 
             if (p.IsOutPut)
             {
-                functionParams +=  p.Name + ": " + p.MappedDataType.JSCodeType;
+                functionParams +=  p.Name.Replace("_", "") + ": " + p.MappedDataType.JSCodeType;
             }
             else
             {
                 if (p.IsNullable)
                 {
-                    functionParams += p.Name + ": " + p.MappedDataType.JSCodeType + " | null";
+                    functionParams += p.Name.Replace("_", "") + ": " + p.MappedDataType.JSCodeType + " | null";
                 }
                 else
                 {
-                    functionParams += p.Name + ": " + p.MappedDataType.JSCodeType;
+                    functionParams += p.Name.Replace("_", "") + ": " + p.MappedDataType.JSCodeType;
                 }
 
                 if (p.DefaultValue.Length > 0)

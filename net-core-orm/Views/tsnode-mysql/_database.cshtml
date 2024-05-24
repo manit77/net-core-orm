@@ -16,7 +16,7 @@ export class SqlConfig {
     database: string = "dbname";
 }
 
-export class Database {
+export class DB {
 
     SQLCONFIG = new SqlConfig();
     CONNECTION : mysql2.PoolConnection | null = null;

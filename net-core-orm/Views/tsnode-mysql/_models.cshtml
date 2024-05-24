@@ -3,7 +3,7 @@
 //Do not modify. v1.0
 //Code generated using custom ORM Mapper on @DateTime.Now
 import * as i from './_interfaces';
-import * as d from '../database';
+import * as d from './_database';
 import * as util from '../utilities'
 
 export class DBResult {
@@ -17,10 +17,10 @@ export class DBResult {
 {
     string tablename = table.Name;
     string pkname = table.Id.Name;
-@:export class @(tablename) implements i.I@(tablename), i.IDBModel {
-@:  d:d.Database;
+@:export class M@(tablename) implements i.I@(tablename), i.IDBModel {
+@:  d:d.DB;
 @:  _IsNew ? : boolean = null;
-@:  constructor( db:d.Database){
+@:  constructor( db:d.DB){
 @:    this.d = db;
 @:  }
     foreach (var col in table.Columns)

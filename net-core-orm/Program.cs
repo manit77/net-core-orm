@@ -29,48 +29,53 @@ namespace CoreORM
         static void Main(string[] args)
         {
             List<ORMConfig> configs = new List<ORMConfig>();
-            string configPath = Path.Join(CoreUtils.IO.CurrentDirectory(), "config.json");
-            Console.WriteLine($"using config file: {configPath}");
-            string json = CoreUtils.IO.ReadFile(configPath);
-            configs = Newtonsoft.Json.JsonConvert.DeserializeObject<List<ORMConfig>>(json);
+            string configPath = Path.Combine(CoreUtils.IO.CurrentDirectory(), "config.json");
+            if (File.Exists(configPath))
+            {
+                Console.WriteLine($"using config file: {configPath}");
+                string json = CoreUtils.IO.ReadFile(configPath);
+                configs = Newtonsoft.Json.JsonConvert.DeserializeObject<List<ORMConfig>>(json);
 
-            CommandLine.Parser.Default.ParseArguments<Options>(args)
-                .WithParsed((Options opts) =>
-                {
-                    var config = configs.Where(i => i.ConfigName == opts.ConfigName).FirstOrDefault();
-                    if (config != null)
+                CommandLine.Parser.Default.ParseArguments<Options>(args)
+                    .WithParsed((Options opts) =>
                     {
-                        GenFiles(config);
-                    }
-                    else
-                    {
-                        //get default
-                        var defaultConfig = configs.Where(i=> i.IsDefault).FirstOrDefault();
-
-                        while (config == null)
+                        var config = configs.Where(i => i.ConfigName == opts.ConfigName).FirstOrDefault();
+                        if (config != null)
                         {
-                            Console.WriteLine($"Enter a config name: [{defaultConfig?.ConfigName}]");
-                            
-                            var configname = Console.ReadLine();
-                            if (string.IsNullOrEmpty(configname))
-                            {
-                                configname = defaultConfig.ConfigName;
-                            }
+                            GenFiles(config);
+                        }
+                        else
+                        {
+                            //get default
+                            var defaultConfig = configs.Where(i => i.IsDefault).FirstOrDefault();
 
-                            config = configs.Where(i => i.ConfigName == configname).FirstOrDefault();
-                            if (config != null)
+                            while (config == null)
                             {
-                                GenFiles(config);
-                                break;
+                                Console.WriteLine($"Enter a config name: [{defaultConfig?.ConfigName}]");
+
+                                var configname = Console.ReadLine();
+                                if (string.IsNullOrEmpty(configname))
+                                {
+                                    configname = defaultConfig.ConfigName;
+                                }
+
+                                config = configs.Where(i => i.ConfigName == configname).FirstOrDefault();
+                                if (config != null)
+                                {
+                                    GenFiles(config);
+                                    break;
+                                }
                             }
                         }
-                    }
 
-                })
-                .WithNotParsed((IEnumerable<Error> errors) =>
-                {
-                    Debug.WriteLine(errors);
-                });
+                    })
+                    .WithNotParsed((IEnumerable<Error> errors) =>
+                    {
+                        Debug.WriteLine(errors);
+                    });
+            } else {
+                Console.WriteLine($"Config file does not exist: {configPath}");
+            }
         }
 
         static void GenFiles(ORMConfig config)
@@ -187,7 +192,7 @@ namespace CoreORM
                     Console.WriteLine($"Generated {outfilepath}");
                 }
             }
-            
+
             if (config.PostProcess != null)
             {
                 foreach (var postProcess in config.PostProcess)
@@ -220,14 +225,16 @@ namespace CoreORM
                 {
                     Console.WriteLine($"Post Process starting: {postProcess.PostProcessExec} {postProcess.PostProcessArgs}");
 
-                    process.OutputDataReceived += new DataReceivedEventHandler((object sender, DataReceivedEventArgs e) => {
+                    process.OutputDataReceived += new DataReceivedEventHandler((object sender, DataReceivedEventArgs e) =>
+                    {
                         if (!string.IsNullOrEmpty(e.Data))
                         {
                             Console.Write(e.Data);
                         }
                     });
 
-                    process.ErrorDataReceived += new DataReceivedEventHandler((object sender, DataReceivedEventArgs e) => {
+                    process.ErrorDataReceived += new DataReceivedEventHandler((object sender, DataReceivedEventArgs e) =>
+                    {
                         if (!string.IsNullOrEmpty(e.Data))
                         {
                             Console.WriteLine("ERROR:" + e.Data);

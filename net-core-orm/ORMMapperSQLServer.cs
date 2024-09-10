@@ -278,6 +278,7 @@ namespace CoreORM
                         }
                         catch (Exception exp)
                         {
+                            Console.WriteLine(exp.ToString());
                             throw new Exception("Unable to parse column mapping for " + table.Name + "." + col.Name);
                         }
                     }
@@ -327,6 +328,7 @@ namespace CoreORM
                     }
                     catch (Exception exp)
                     {
+                        Console.WriteLine(exp.ToString());
                         throw new Exception("Unable to parse table mapping for " + table.Name);
                     }
                 }
@@ -437,6 +439,7 @@ namespace CoreORM
                                     }
                                     catch (Exception exp)
                                     {
+                                        Console.WriteLine(exp.ToString());
                                         throw new Exception("Unable to parse ForeignKey mapping for " + linkerTable.Name);
                                     }
                                 }

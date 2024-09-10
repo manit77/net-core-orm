@@ -1,12 +1,11 @@
 ﻿@using CoreORM
 @model DBDatabase
 //Do not modify. v1.0
-//Code generated using custom ORM Mapper on @DateTime.Now
+//Code generated using net-core-orm
 
 export class SQLStrings {
 @foreach (var table in Model.Tables)
     {
-
 @:        static @(table.Name)_Insert: string = " @(table.SQL_Insert)";
 @:        static @(table.Name)_Select: string = " @(table.SQL_Select)";
 @:        static @(table.Name)_Update: string = " @(table.SQL_Update)";

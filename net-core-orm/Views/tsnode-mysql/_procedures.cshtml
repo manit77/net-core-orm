@@ -1,7 +1,8 @@
 ﻿@using CoreORM
 @model DBDatabase
 //Do not modify. v1.0
-//Code generated using custom ORM Mapper on @DateTime.Now
+//Code generated using net-core-orm
+
 import * as d from "./_database";
 import { DBResult } from "./_models";
 
@@ -14,11 +15,14 @@ constructor(private d: d.DB){ }
         string spParams = "";
         string spname = sp.Name.ToLower();
         bool isSearchOrGet = false;
+        bool isSearch = false;
         bool isFunction = false;
-        bool isScalar = false;
+        // bool isScalar = false;
         string codeSQLCall = sp.Name;
         string sqlFunctioncallparamlist = ""; //used to generate the sql params list
-
+        if (spname.StartsWith("search")){
+            isSearch = true;
+        }
         if (spname.StartsWith("search") || spname.StartsWith("get") || spname.StartsWith("saveandget") || spname.StartsWith("updateandget"))
         {
             isSearchOrGet = true;
@@ -71,28 +75,43 @@ constructor(private d: d.DB){ }
                 }
             }
         }
+
+        var paramsstr = "";
+
+        if(functionParams.Length > 0){
+            paramsstr = $"params: {{ {functionParams} }}";
+        }
         if (isSearchOrGet){
-@:    async @(sp.Name)(params: { @(Html.Raw(functionParams)) }): Promise@(Html.Raw("<"))Array@(Html.Raw("<"))any@(Html.Raw(">>")) {
+            if(isSearch){
+@:    async @(sp.Name)(@(paramsstr)): Promise@(Html.Raw("<"))[Array@(Html.Raw("<"))any@(Html.Raw(">, number]>")) {
+            } else {     
+@:    async @(sp.Name)(@(paramsstr)): Promise@(Html.Raw("<"))Array@(Html.Raw("<"))any@(Html.Raw(">>")) {
+            }
         } else
         {
-@:    async @(sp.Name)(params: { @(Html.Raw(functionParams)) }): Promise@(Html.Raw("<"))DBResult@(Html.Raw(">")) {
+@:    async @(sp.Name)(@(paramsstr)): Promise@(Html.Raw("<"))DBResult@(Html.Raw(">")) {
         }
-<text>        try {
-@{
-    if (isSearchOrGet)
-                {
-@:            let [result] = await this.d.QueryRows('call @(sp.Name)(@(spParams))', params);
-@:            return result as Array@(Html.Raw("<"))any>;
-    } else{
-@:            let result = await this.d.Execute('call @(sp.Name)(@(spParams))', params);
+
+        paramsstr = "";
+       if(functionParams.Length > 0){
+            paramsstr = ", params";
+        } else {
+            paramsstr = ", {}";
+        }
+<text>@{
+    if (isSearchOrGet) {
+            if(isSearch){
+@:            return this.d.ParseSearchResults(await this.d.QueryResults('call @(sp.Name)(@(spParams))' @(paramsstr)));
+            } else {
+@:            return await this.d.QueryRows('call @(sp.Name)(@(spParams))' @(paramsstr));                
+            }
+
+    } else {
+@:            let result = await this.d.Execute('call @(sp.Name)(@(spParams))' @(paramsstr));
 @:            return result;
     }
-}            
-        } catch (e:any) {
-            var nE = new Error(e.message);
-            throw nE;
-        }
-    }
+}
+}
 </text>       
 } //end Procedures loop
 } 

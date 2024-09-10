@@ -198,6 +198,7 @@ AND information_schema.TABLE_CONSTRAINTS.TABLE_SCHEMA = '{dbName}';";
                         try {
                             col.Mapping = JsonSerializer.Deserialize<DBORMColumnMap>(colMapping.FormMeta);
                         } catch (Exception exp) {
+                            Console.WriteLine(exp.ToString());
                             throw new Exception("Unable to parse column mapping for " + table.Name + "." + col.Name);
                         }
                     } else {
@@ -237,6 +238,7 @@ AND information_schema.TABLE_CONSTRAINTS.TABLE_SCHEMA = '{dbName}';";
                     try {
                         table.Mapping = JsonSerializer.Deserialize<DBORMTableMap>(tableMapping.FormMeta);
                     } catch (Exception exp) {
+                        Console.WriteLine(exp.ToString());
                         throw new Exception("Unable to parse table mapping for " + table.Name);
                     }
                 }
@@ -327,6 +329,7 @@ AND information_schema.TABLE_CONSTRAINTS.TABLE_SCHEMA = '{dbName}';";
                                     try {
                                         linkerTable.OneToManyMapping = JsonSerializer.Deserialize<DBORMColumnMap>(linkerMap.FormMeta);
                                     } catch (Exception exp) {
+                                        Console.WriteLine(exp.ToString());
                                         throw new Exception("Unable to parse ForeignKey mapping for " + linkerTable.Name);
                                     }
                                 }

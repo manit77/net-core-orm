@@ -16,8 +16,7 @@ constructor(private d: d.Database){ }
         bool isFunction = false;
         bool isScalar = false;
         string codeSQLCall = sp.Name;
-        string sqlFunctioncallparamlist = ""; //used to generate the sql params list
-        
+        string sqlFunctioncallparamlist = ""; //used to generate the sql params list        
 
         if (spname.StartsWith("search") || spname.StartsWith("get"))
         {
@@ -71,7 +70,6 @@ constructor(private d: d.Database){ }
                 }
             }
         }
-
 
         if (functionParams.Length > 0){
 @:    async @(sp.Name)(params: { @(Html.Raw(functionParams)) }): Promise@(Html.Raw("<"))Array@(Html.Raw("<"))any@(Html.Raw(">>")) {

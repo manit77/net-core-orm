@@ -12,8 +12,6 @@ using Microsoft.Extensions.ObjectPool;
 using System.Collections.Generic;
 using System.Linq;
 using CommandLine;
-using static Org.BouncyCastle.Math.EC.ECCurve;
-using Microsoft.AspNetCore.Mvc;
 
 namespace CoreORM
 {
@@ -23,12 +21,12 @@ namespace CoreORM
         {
             [Option('c', "config name", Required = false, HelpText = "enter the config name defined in your config file")]
             public string ConfigName { get; set; }
-
         }
 
         static void Main(string[] args)
         {
-            List<ORMConfig> configs = new List<ORMConfig>();
+            List<ORMConfig> configs = [];
+        
             string configPath = Path.Combine(CoreUtils.IO.CurrentDirectory(), "config.json");
             if (File.Exists(configPath))
             {

@@ -1,0 +1,101 @@
+@using CoreORM
+@model DBDatabase
+
+import { MySQLDB } from "../dbcrud/mysql_db";
+import * as collections from "./_collections";
+import { DBResult } from "../dbcrud/models";
+import * as schema from "./_schema";
+import { ValidationUtils } from "../dbcrud/validators";
+import { GetIdField } from "../utilities";
+import { clone } from "lodash";
+import { AuthTokenObject } from "../models/authToken";
+
+@foreach(var table in Model.Tables){
+
+@: export class _@(table.Name)CollectionBase {
+
+@:     InsertValidators = {};
+@:     UpdateValidators = {};
+@:     DeleteValidators = {};
+
+@:     db: MySQLDB;
+
+@:    async Get@(table.Name)(model: schema.I@(table.Name), Id: number): Promise@(Html.Raw("<"))schema.I@(table.Name)> {        
+@:        return await collections._@(table.Name)Collection.Get@(table.Name)(this.db, model, { Id: Id });
+@:    }
+
+@:    New@(table.Name)(): schema.I@(table.Name) {
+@:        return clone(schema.@(table.Name)Schema.ObjectRef) as schema.I@(table.Name);
+@:    }
+
+@:     async Save@(table.Name)(auth: AuthTokenObject, model: schema.I@(table.Name)): Promise@(Html.Raw("<"))DBResult> {
+@:         let errors = [];
+@:         let dbresult: DBResult;
+
+@:         let id = GetIdField(model);
+@:         if (id != null) {
+@:             if (id <= 0) {
+@:                 errors = ValidationUtils.ValidateModel(this.InsertValidators, model);
+    if(table.GetColumn("UserIdCreated") != null) {
+@:                 model.UserIdCreated = auth.Id;
+    }
+    if(table.GetColumn("DateTimeCreated") != null) {
+@:                 model.DateTimeCreated = new Date();
+    }
+@("             } else {")
+@:                 errors = ValidationUtils.ValidateModel(this.UpdateValidators, model);
+    if(table.GetColumn("UserIdModified") != null) {
+@:                model.UserIdModified = auth.Id;
+    }
+    if(table.GetColumn("DatetimeModified") != null) {
+@:                model.DatetimeModified = new Date();
+    }
+@:             }
+@:             if (errors.length == 0) {
+@:                 dbresult = await this.Save(model);
+@("             } else {")
+@:                 dbresult = new DBResult();
+@:                 dbresult.Valid = false;
+@:                 dbresult.MessageText = errors.reduce((all, msg) => all += msg + ". ", "").trimEnd();
+@:             }
+@("             } else {")
+@:             dbresult = new DBResult(false, "invalid Id.");
+@:         }
+@:         return dbresult;
+@:     }
+
+@:     async Delete@(table.Name)(model: schema.I@(table.Name)): Promise@(Html.Raw("<"))DBResult> {
+@:         let errors = [];
+@:         let dbresult: DBResult;
+@:         let id = GetIdField(model);
+@:         if (id != null) {
+@:             errors = ValidationUtils.ValidateModel(this.DeleteValidators, model);
+@:             if (errors.length == 0) {
+@:                 dbresult = await this.Delete(model);
+@("             } else {")
+@:                 dbresult = new DBResult();
+@:                 dbresult.Valid = false;
+@:                 dbresult.MessageText = errors.reduce((all, msg) => all += msg + ". ", "").trimEnd();
+@:             }
+@("             } else {")
+@:             dbresult = new DBResult(false, "invalid Id.");
+@:         }
+@:         return dbresult;
+@:     }
+    
+@:     async Save(model: schema.I@(table.Name)): Promise@(Html.Raw("<"))DBResult> {
+@:         let result = new DBResult();
+@:         if (model.Id <= 0) {
+@:             result = await collections._@(table.Name)Collection.New@(table.Name)(this.db, model);
+@("             } else {")
+@:             result = await collections._@(table.Name)Collection.Update@(table.Name)(this.db, model);
+@:         }
+@:         return result;
+@:     }
+
+@:     async Delete(model: schema.I@(table.Name)): Promise@(Html.Raw("<"))DBResult> {
+@:         return await collections._@(table.Name)Collection.Delete@(table.Name)(this.db, model);
+@:     }
+@: }
+
+}

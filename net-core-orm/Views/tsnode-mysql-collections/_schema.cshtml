@@ -1,0 +1,41 @@
+@using CoreORM
+@model DBDatabase
+//Code generated using net-core-orm
+
+@foreach (var table in Model.Tables)
+{
+    string tablename = table.Name;
+    string pkname = table.Id.Name;
+
+@:export interface I@(tablename) {
+
+    foreach (var col in table.Columns)
+    {
+if (col.IsNullable)
+            {
+@:  @(col.Name)@(col.IsPrimaryKey ? "" : "?"): @(col.MappedDataType.JSCodeType) | null;
+            }
+            else
+            {
+@:  @(col.Name)@(col.IsPrimaryKey ? "" : "?"): @(col.MappedDataType.JSCodeType);
+            }
+    }
+@:} //end interface
+
+@:export const @(tablename)Schema = {
+@:    TableName: "@(tablename)",
+@:    PKeys: [@(Html.Raw(string.Join(",", table.PrimaryKeys.Select(i=> "\"" + i.Name + "\"").ToArray())))],
+@:    AutoField: "@table.Id.Name",
+@:    ObjectRef : {
+    foreach (var col in table.Columns) {
+        @:  @(col.Name) : @(Html.Raw(col.MappedDataType.JSCodeTypeDefaultValue)),
+    } //end for, Fields
+@:  },
+@:     Fields:{
+    foreach (var col in table.Columns) {
+        @:  @(col.Name) : "@(col.Name)",
+    } //end for, Fields
+@:  }
+@:} //end schema
+
+} //end for each

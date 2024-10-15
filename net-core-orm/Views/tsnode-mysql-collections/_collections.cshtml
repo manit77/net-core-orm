@@ -1,0 +1,57 @@
+@using CoreORM
+@model DBDatabase
+import { MySQLDB } from "../dbcrud/mysql_db";
+import * as schema from "./_schema"
+import { MySQLExec, MySQLSQLStringsBuilder } from "../dbcrud/mysql";
+import { DBResult } from "../dbcrud/models";
+
+@foreach(var table in Model.Tables){
+
+@:  export class _@(table.Name)Collection {
+
+@:      static async Update@(table.Name)(db: MySQLDB, model: schema.I@(table.Name)): Promise@(Html.Raw("<"))DBResult> {
+@:          let sql: string = "";
+@:          sql = MySQLSQLStringsBuilder.GetUpdateSQL(model, schema.@(table.Name)Schema);
+@:          if (sql) {
+@:              return MySQLExec.ExecUpdate(db.POOL, sql, model, schema.@(table.Name)Schema);
+@:          } else {
+@:              throw "invalid model.";
+@:          }
+@:      }
+
+@:    static async New@(table.Name)(db: MySQLDB, model: schema.I@(table.Name)): Promise@(Html.Raw("<"))DBResult> {
+@:        let sql: string = "";
+@:        sql = MySQLSQLStringsBuilder.GetInsertSQL(model, schema.@(table.Name)Schema);
+@:        if (sql) {
+@:            return MySQLExec.ExecNew(db.POOL, sql, model, schema.@(table.Name)Schema);
+@:        } else {
+@:            throw "invalid model.";
+@:        }
+@:    }
+
+@:    static async Get@(table.Name)(db: MySQLDB, model: schema.I@(table.Name), pkeys : { @( string.Join(",", table.PrimaryKeys.Select(pk => pk.Name + ":" + pk.MappedDataType.JSCodeType).ToArray()))}): Promise@(Html.Raw("<"))schema.I@(table.Name)> {
+@:        let sql: string = "";
+@:        sql = MySQLSQLStringsBuilder.GetSelectSQL(model, schema.@(table.Name)Schema);
+@:        if (sql) {
+@:            let rows = await MySQLExec.ExecQueryRows(db.POOL, sql, pkeys);
+@:            if(rows.length > 0){
+@:               return rows[0] as schema.I@(table.Name);
+@:            }
+@:        } else {
+@:            throw "invalid model.";
+@:        }
+@:        return null;
+@:    }
+
+@:    static async Delete@(table.Name)(db: MySQLDB, model: schema.I@(table.Name)): Promise@(Html.Raw("<"))DBResult> {
+@:        let sql: string = "";
+@:        sql = MySQLSQLStringsBuilder.GetDeleteSQL(model, schema.@(table.Name)Schema);
+@:        if (sql) {
+@:            return MySQLExec.ExecDelete(db.POOL, sql, model);
+@:        } else {
+@:            throw "invalid model.";
+@:        }
+@:    }
+
+@:  }
+}

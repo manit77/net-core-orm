@@ -1,41 +1,45 @@
 @using CoreORM
 @model DBDatabase
-
 import { MySQLDB } from "../dbcrud/mysql_db";
 import * as collections from "./_collections";
-import { DBResult } from "../dbcrud/models";
+import { DBResult, DBResultCode, DBSaveConfig } from "../dbcrud/models";
 import * as schema from "./_schema";
 import { ValidationUtils } from "../dbcrud/validators";
-import { GetIdField } from "../utilities";
+import { Copy, GetIdField } from "../utilities";
 import { clone } from "lodash";
 import { AuthTokenObject } from "../models/authToken";
 
 @foreach(var table in Model.Tables){
 
 @: export class _@(table.Name)CollectionBase {
-
-@:     InsertValidators = {};
-@:     UpdateValidators = {};
-@:     DeleteValidators = {};
-
 @:     db: MySQLDB;
 
-@:    async Get@(table.Name)(model: schema.I@(table.Name), Id: number): Promise@(Html.Raw("<"))schema.I@(table.Name)> {        
-@:        return await collections._@(table.Name)Collection.Get@(table.Name)(this.db, model, { Id: Id });
+@:    async Get@(table.Name)(fields: schema.I@(table.Name) | schema.@(table.Name)Fields[], Id: number): Promise@(Html.Raw("<"))schema.I@(table.Name)> {        
+@:        return await collections._@(table.Name)Collection.Get@(table.Name)(this.db, fields, { Id: Id });
 @:    }
 
 @:    New@(table.Name)(): schema.I@(table.Name) {
-@:        return clone(schema.@(table.Name)Schema.ObjectRef) as schema.I@(table.Name);
+@:        return {
+    foreach(var col in table.Columns){
+@:      @(col.Name) :  @(Html.Raw((col.IsNullable == true) ? "null" : col.MappedDataType.JSCodeTypeDefaultValue)),
+    }
+@:              };
 @:    }
 
-@:     async Save@(table.Name)(auth: AuthTokenObject, model: schema.I@(table.Name)): Promise@(Html.Raw("<"))DBResult> {
+@:     async Save@(table.Name)(auth: AuthTokenObject, savemodel: schema.I@(table.Name), config?: DBSaveConfig): Promise@(Html.Raw("<"))DBResult> {
 @:         let errors = [];
 @:         let dbresult: DBResult;
-
-@:         let id = GetIdField(model);
+@:         let id = GetIdField(savemodel);
 @:         if (id != null) {
+@:             let model: schema.I@(table.Name) = null;    
 @:             if (id <= 0) {
-@:                 errors = ValidationUtils.ValidateModel(this.InsertValidators, model);
+@:                model = clone(schema.@(table.Name)Schema.ObjectRef);
+@:                Copy(savemodel, model, config?.ignorefields);
+@:             } else {
+@:                model = clone(savemodel);
+@:             }
+@:             if (id <= 0) {
+@:                 errors = ValidationUtils.ValidateModel(config?.validators, model);
     if(table.GetColumn("UserIdCreated") != null) {
 @:                 model.UserIdCreated = auth.Id;
     }
@@ -43,7 +47,7 @@ import { AuthTokenObject } from "../models/authToken";
 @:                 model.DateTimeCreated = new Date();
     }
 @("             } else {")
-@:                 errors = ValidationUtils.ValidateModel(this.UpdateValidators, model);
+@:                 errors = ValidationUtils.ValidateModel(config?.validators, model);
     if(table.GetColumn("UserIdModified") != null) {
 @:                model.UserIdModified = auth.Id;
     }
@@ -52,11 +56,21 @@ import { AuthTokenObject } from "../models/authToken";
     }
 @:             }
 @:             if (errors.length == 0) {
-@:                 dbresult = await this.Save(model);
+@:                 if(config?.ignorefields) {
+@:                    for(let f of config.ignorefields){
+@:                        delete model[f];
+@:                    }
+@:                    dbresult = await this.Save(model);
+@:                    savemodel.Id = model.Id;
+@("             } else {")
+@:                    dbresult = await this.Save(model);
+@:                    savemodel.Id = model.Id;
+@:                }
 @("             } else {")
 @:                 dbresult = new DBResult();
 @:                 dbresult.Valid = false;
-@:                 dbresult.MessageText = errors.reduce((all, msg) => all += msg + ". ", "").trimEnd();
+@:                 dbresult.MessageText = errors.join(". ").trimEnd();
+@:                 dbresult.ValidationErrors = errors;
 @:             }
 @("             } else {")
 @:             dbresult = new DBResult(false, "invalid Id.");
@@ -64,18 +78,18 @@ import { AuthTokenObject } from "../models/authToken";
 @:         return dbresult;
 @:     }
 
-@:     async Delete@(table.Name)(model: schema.I@(table.Name)): Promise@(Html.Raw("<"))DBResult> {
+@:     async Delete@(table.Name)(auth: AuthTokenObject, model: schema.I@(table.Name), config?: DBSaveConfig): Promise@(Html.Raw("<"))DBResult> {
 @:         let errors = [];
 @:         let dbresult: DBResult;
 @:         let id = GetIdField(model);
 @:         if (id != null) {
-@:             errors = ValidationUtils.ValidateModel(this.DeleteValidators, model);
+@:             errors = ValidationUtils.ValidateModel(config?.validators, model);
 @:             if (errors.length == 0) {
 @:                 dbresult = await this.Delete(model);
 @("             } else {")
 @:                 dbresult = new DBResult();
 @:                 dbresult.Valid = false;
-@:                 dbresult.MessageText = errors.reduce((all, msg) => all += msg + ". ", "").trimEnd();
+@:                 dbresult.MessageText = errors.join(". ").trimEnd();
 @:             }
 @("             } else {")
 @:             dbresult = new DBResult(false, "invalid Id.");
@@ -83,18 +97,35 @@ import { AuthTokenObject } from "../models/authToken";
 @:         return dbresult;
 @:     }
     
-@:     async Save(model: schema.I@(table.Name)): Promise@(Html.Raw("<"))DBResult> {
+@:     private async Save(model: schema.I@(table.Name)): Promise@(Html.Raw("<"))DBResult> {
 @:         let result = new DBResult();
+@:         result.Valid = true;
 @:         if (model.Id <= 0) {
 @:             result = await collections._@(table.Name)Collection.New@(table.Name)(this.db, model);
+@:            if (result.RowsAffected <= 0) {
+@:                result.Valid = false;
+@:                result.MessageText = "recorded not added.";
+@:                result.Code = DBResultCode.notadded;
+@:            }
 @("             } else {")
 @:             result = await collections._@(table.Name)Collection.Update@(table.Name)(this.db, model);
+@:            if (result.RowsAffected <= 0) {
+@:                result.Valid = false;
+@:                result.MessageText = "recorded not found.";
+@:                result.Code = DBResultCode.notfound;
+@:            }
 @:         }
 @:         return result;
 @:     }
 
-@:     async Delete(model: schema.I@(table.Name)): Promise@(Html.Raw("<"))DBResult> {
-@:         return await collections._@(table.Name)Collection.Delete@(table.Name)(this.db, model);
+@:     private async Delete(model: schema.I@(table.Name)): Promise@(Html.Raw("<"))DBResult> {
+@:        let result = await collections._@(table.Name)Collection.Delete@(table.Name)(this.db, model);
+@:        if (result.RowsAffected <= 0) {
+@:            result.Valid = false;
+@:            result.MessageText = "recorded not found.";
+@:            result.Code = DBResultCode.notfound;
+@:        }
+@:        return result;
 @:     }
 @: }
 

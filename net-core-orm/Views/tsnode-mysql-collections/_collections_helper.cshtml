@@ -5,22 +5,15 @@
 @:import { _@(table.Name)CollectionBase } from "../autogen/_collections_override";
 @:import { Validators, } from "../dbcrud/validators";
 @(Html.Raw("\r"))
-@: let @(table.Name)InsertValidators = { }
+@:export let @(table.Name)InsertValidators = { Id: [Validators.MustMatch(0)] };
 @(Html.Raw("\r"))
-@: let @(table.Name)UpdateValidators = {    
-@:     Id: [Validators.NumGreater(0)],  
-@: }
+@:export let @(table.Name)UpdateValidators = { Id: [Validators.NumGreater(0)] };
 @(Html.Raw("\r"))
-@: let @(table.Name)DeleteValidators = {
-@:     Id: [Validators.NumGreater(0)],
-@: };
+@:export let @(table.Name)DeleteValidators = { Id: [Validators.NumGreater(0)] };
 @(Html.Raw("\r"))
 @: export class @(table.Name)Collection extends _@(table.Name)CollectionBase {
 @:     constructor(database: MySQLDB) {
-@:         super();       
-@:         this.InsertValidators = @(table.Name)InsertValidators;
-@:         this.UpdateValidators = @(table.Name)UpdateValidators;
-@:         this.DeleteValidators = @(table.Name)DeleteValidators;
+@:         super();
 @:         this.db = database;
 @:     }
 @: }

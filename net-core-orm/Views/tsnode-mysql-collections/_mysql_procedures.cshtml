@@ -3,25 +3,35 @@
 //Code generated using net-core-orm
 import { MySQLDB } from "../dbcrud/mysql_db";
 import { DBResult } from "../dbcrud/models";
+import { isArray } from "lodash";
 
 export class MySqlProcedures {
     constructor(private d: MySQLDB) { }
-     ParseSearchResults(results: Array<any>): [Array<any>, number] {
-        //remove the header info
-        results.pop();
-        if (results.length == 1) {
-            return [results[0], results[0].length];
-        } else if (results.length > 1) {
-            let rows = results[0];
-            let totalrows = results[0].length;
-            if (Object.prototype.hasOwnProperty.call(results[1][0], "TotalRows")) {
-                totalrows = results[1][0].TotalRows;
+     ParseSearchResults(results: Array<any>): [Array<any>, number] {        
+        // procedures contains
+        // resultsData : [0] = [ rows, rows, ...ResultsHeader]
+        // row definition: [1]
+
+        let resultsData = results[0];
+        resultsData.pop(); //remove the ResultsHeader
+
+        if (resultsData.length == 1) {
+            // stored procedure only has on select statement
+            return [resultsData[0], resultsData[0].length];
+        } else if (resultsData.length > 1) {
+            // stored procedure has one select statement
+            // the last select is a totalRows
+            let rows = resultsData[0];
+            let totalrows = rows.length;
+            let totalRowsResults = resultsData[resultsData.length - 1];
+            totalRowsResults = isArray(totalRowsResults) ? totalRowsResults[0] : null;
+            if (totalRowsResults && Object.prototype.hasOwnProperty.call(totalRowsResults, "TotalRows")) {
+                totalrows = totalRowsResults.TotalRows;
             }
             return [rows, totalrows];
         }
-        return [[], 0];
+        return [[], 0];        
     }
-
 @{
     foreach (var sp in Model.Procedures)
     {
@@ -115,9 +125,9 @@ export class MySqlProcedures {
 <text>@{
     if (isSearchOrGet) {
             if(isSearch){
-@:            return this.ParseSearchResults(await this.d.QueryResults('call @(sp.Name)(@(spParams))' @(paramsstr)));
+@:            return this.ParseSearchResults(await this.d.POOL.execute('call @(sp.Name)(@(spParams))' @(paramsstr)));
             } else {
-@:            return await this.d.QueryRows('call @(sp.Name)(@(spParams))' @(paramsstr));                
+@:            return await this.d.QuerySP('call @(sp.Name)(@(spParams))' @(paramsstr));
             }
 
     } else {

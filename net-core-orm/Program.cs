@@ -124,11 +124,12 @@ namespace CoreORM
             string txt = string.Empty;
             DateTime startTime = DateTime.Now;
             Console.WriteLine("BEGIN Code Generation " + startTime);
-
             Console.WriteLine($"DirOutDir={config.DirOutDir}");
             Console.WriteLine($"ViewsDirectory={config.ViewsDirectory}");
             Console.WriteLine($"ViewsCount={config.Views?.Count}");
 
+            CoreUtils.IO.DeleteFiles(config.DirOutDir);
+            
             if (config.Views != null)
             {
                 Console.WriteLine($"Executing using Views configs");

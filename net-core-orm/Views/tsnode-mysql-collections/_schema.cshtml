@@ -7,6 +7,12 @@
     string tablename = table.Name;
     string pkname = table.Id.Name;
 
+@:export enum @(tablename)Fields {
+foreach (var col in table.Columns) {
+    @:  @(col.Name) = "@(col.Name)",
+} //end for, Fields
+@:} //end Fields @(tablename)
+
 @:export interface I@(tablename) {
 
     foreach (var col in table.Columns)
@@ -20,7 +26,7 @@ if (col.IsNullable)
 @:  @(col.Name)@(col.IsPrimaryKey ? "" : "?"): @(col.MappedDataType.JSCodeType);
             }
     }
-@:} //end interface
+@:} //end interface @(tablename)
 
 @:export const @(tablename)Schema = {
 @:    TableName: "@(tablename)",
@@ -31,11 +37,7 @@ if (col.IsNullable)
         @:  @(col.Name) : @(Html.Raw(col.MappedDataType.JSCodeTypeDefaultValue)),
     } //end for, Fields
 @:  },
-@:     Fields:{
-    foreach (var col in table.Columns) {
-        @:  @(col.Name) : "@(col.Name)",
-    } //end for, Fields
-@:  }
-@:} //end schema
+@:     Fields : @(tablename)Fields
+@:} //end schema @(tablename)
 
 } //end for each

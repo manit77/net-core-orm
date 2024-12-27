@@ -8,17 +8,22 @@ import { ValidationUtils } from "../dbcrud/validators";
 import { Copy, GetIdField } from "../utilities";
 import { clone } from "lodash";
 import { AuthTokenObject } from "../models/authToken";
+import { ContainsValidDBValues } from "../dbcrud/utils";
 
 @foreach(var table in Model.Tables){
 
-@: export class _@(table.Name)CollectionBase {
-@:     db: MySQLDB;
+@: export class @(table.Name)Collection {
+@:     constructor(private db: MySQLDB) { }
 
-@:    async Get@(table.Name)(fields: schema.I@(table.Name) | schema.@(table.Name)Fields[], Id: number): Promise@(Html.Raw("<"))schema.I@(table.Name)> {        
+@:     async Where(fields: schema.I@(table.Name) | schema.@(table.Name)Fields[] | object, where: schema.I@(table.Name)): Promise@(Html.Raw("<"))schema.I@(table.Name)[]>{
+@:        return await collections._@(table.Name)Collection.Where@(table.Name)(this.db, fields, where);
+@:    }
+
+@:    async Get(fields: schema.I@(table.Name) | schema.@(table.Name)Fields[] | object, Id: number): Promise@(Html.Raw("<"))schema.I@(table.Name)> {        
 @:        return await collections._@(table.Name)Collection.Get@(table.Name)(this.db, fields, { Id: Id });
 @:    }
 
-@:    New@(table.Name)(): schema.I@(table.Name) {
+@:    New(): schema.I@(table.Name) {
 @:        return {
     foreach(var col in table.Columns){
 @:      @(col.Name) :  @(Html.Raw((col.IsNullable == true) ? "null" : col.MappedDataType.JSCodeTypeDefaultValue)),
@@ -26,7 +31,7 @@ import { AuthTokenObject } from "../models/authToken";
 @:              };
 @:    }
 
-@:     async Save@(table.Name)(auth: AuthTokenObject, savemodel: schema.I@(table.Name), config?: DBSaveConfig): Promise@(Html.Raw("<"))DBResult> {
+@:     async Save(auth: AuthTokenObject, savemodel: schema.I@(table.Name), config?: DBSaveConfig): Promise@(Html.Raw("<"))DBResult> {
 @:         let errors = [];
 @:         let dbresult: DBResult;
 @:         let id = GetIdField(savemodel);
@@ -60,10 +65,10 @@ import { AuthTokenObject } from "../models/authToken";
 @:                    for(let f of config.ignorefields){
 @:                        delete model[f];
 @:                    }
-@:                    dbresult = await this.Save(model);
+@:                    dbresult = await this._Save(model);
 @:                    savemodel.Id = model.Id;
 @("             } else {")
-@:                    dbresult = await this.Save(model);
+@:                    dbresult = await this._Save(model);
 @:                    savemodel.Id = model.Id;
 @:                }
 @("             } else {")
@@ -78,14 +83,14 @@ import { AuthTokenObject } from "../models/authToken";
 @:         return dbresult;
 @:     }
 
-@:     async Delete@(table.Name)(auth: AuthTokenObject, model: schema.I@(table.Name), config?: DBSaveConfig): Promise@(Html.Raw("<"))DBResult> {
+@:     async Delete(auth: AuthTokenObject, model: schema.I@(table.Name), config?: DBSaveConfig): Promise@(Html.Raw("<"))DBResult> {
 @:         let errors = [];
 @:         let dbresult: DBResult;
 @:         let id = GetIdField(model);
 @:         if (id != null) {
 @:             errors = ValidationUtils.ValidateModel(config?.validators, model);
 @:             if (errors.length == 0) {
-@:                 dbresult = await this.Delete(model);
+@:                 dbresult = await this._Delete(model);
 @("             } else {")
 @:                 dbresult = new DBResult();
 @:                 dbresult.Valid = false;
@@ -97,9 +102,15 @@ import { AuthTokenObject } from "../models/authToken";
 @:         return dbresult;
 @:     }
     
-@:     private async Save(model: schema.I@(table.Name)): Promise@(Html.Raw("<"))DBResult> {
-@:         let result = new DBResult();
-@:         result.Valid = true;
+@:     private async _Save(model: schema.I@(table.Name)): Promise@(Html.Raw("<"))DBResult> {
+@:         let result = new DBResult(true);
+@:         let id = GetIdField(model);
+@:         let [c, msg] = ContainsValidDBValues(model);
+@:         if (c == false) {
+@:             result.Valid = false;
+@:             result.MessageText = msg;
+@:             return result;
+@:         }
 @:         if (model.Id <= 0) {
 @:             result = await collections._@(table.Name)Collection.New@(table.Name)(this.db, model);
 @:            if (result.RowsAffected <= 0) {
@@ -118,7 +129,7 @@ import { AuthTokenObject } from "../models/authToken";
 @:         return result;
 @:     }
 
-@:     private async Delete(model: schema.I@(table.Name)): Promise@(Html.Raw("<"))DBResult> {
+@:     private async _Delete(model: schema.I@(table.Name)): Promise@(Html.Raw("<"))DBResult> {
 @:        let result = await collections._@(table.Name)Collection.Delete@(table.Name)(this.db, model);
 @:        if (result.RowsAffected <= 0) {
 @:            result.Valid = false;

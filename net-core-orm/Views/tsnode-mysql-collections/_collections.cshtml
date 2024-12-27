@@ -31,7 +31,7 @@ import { DBResult } from "../dbcrud/models";
 @:        }
 @:    }
 
-@:    static async Get@(table.Name)(db: MySQLDB, fields: schema.I@(table.Name) | schema.@(table.Name)Fields[], pkeys : { @( string.Join(",", table.PrimaryKeys.Select(pk => pk.Name + ":" + pk.MappedDataType.JSCodeType).ToArray()))}): Promise@(Html.Raw("<"))schema.I@(table.Name)> {
+@:    static async Get@(table.Name)(db: MySQLDB, fields: schema.I@(table.Name) | schema.@(table.Name)Fields[] | object, pkeys : { @( string.Join(",", table.PrimaryKeys.Select(pk => pk.Name + ":" + pk.MappedDataType.JSCodeType).ToArray()))}): Promise@(Html.Raw("<"))schema.I@(table.Name)> {
 @:        let sql: string = "";
 @:        sql = MySQLSQLStringsBuilder.GetSelectSQL(fields, schema.@(table.Name)Schema);
 @:          console.log(sql);
@@ -44,6 +44,16 @@ import { DBResult } from "../dbcrud/models";
 @:            throw "invalid get model on @(table.Name).";
 @:        }
 @:        return null;
+@:    }
+
+@:    static async Where@(table.Name)(db: MySQLDB, fields: schema.I@(table.Name) | schema.@(table.Name)Fields[] | object, where: schema.I@(table.Name)): Promise@(Html.Raw("<"))schema.I@(table.Name)[]> {
+@:        let sql: string = "";
+@:        sql = MySQLSQLStringsBuilder.GetSelectWhereSQL(fields, where, schema.@(table.Name)Schema);
+@:        if (sql) {
+@:            return await MySQLExec.ExecQueryRows(db.POOL, sql, where);
+@:        } else {
+@:            throw "invalid model on where @(table.Name).";
+@:        }
 @:    }
 
 @:    static async Delete@(table.Name)(db: MySQLDB, model: schema.I@(table.Name)): Promise@(Html.Raw("<"))DBResult> {

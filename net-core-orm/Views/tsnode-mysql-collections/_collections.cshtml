@@ -1,71 +1,33 @@
 @using CoreORM
 @model DBDatabase
-import { MySQLDB } from "../dbcrud/mysql_db";
-import * as schema from "./_schema"
-import { MySQLExec, MySQLSQLStringsBuilder } from "../dbcrud/mysql";
-import { DBResult } from "../dbcrud/models";
+import { MySQLDB } from "../database/mysql_db";
+import * as schema from "./_schema";
+import { MySQLCollections } from "../database/mysql_collections";
+import { DBResult, DBSaveConfig } from "../database/models";
 
-@foreach(var table in Model.Tables){
+@foreach(var table in Model.Tables) {
 
-@:  export class _@(table.Name)Collection {
-
-@:      static async Update@(table.Name)(db: MySQLDB, model: schema.I@(table.Name)): Promise@(Html.Raw("<"))DBResult> {
-@:          let sql: string = "";
-@:          sql = MySQLSQLStringsBuilder.GetUpdateSQL(model, schema.@(table.Name)Schema);
-@:          console.log(sql);
-@:          if (sql) {
-@:              return MySQLExec.ExecUpdate(db.POOL, sql, model, schema.@(table.Name)Schema);
-@:          } else {
-@:              throw "invalid update model on @(table.Name).";
-@:          }
-@:      }
-
-@:    static async New@(table.Name)(db: MySQLDB, model: schema.I@(table.Name)): Promise@(Html.Raw("<"))DBResult> {
-@:        let sql: string = "";
-@:        sql = MySQLSQLStringsBuilder.GetInsertSQL(model, schema.@(table.Name)Schema);
-@:          console.log(sql);
-@:        if (sql) {
-@:            return MySQLExec.ExecNew(db.POOL, sql, model, schema.@(table.Name)Schema);
-@:        } else {
-@:            throw "invalid new model on @(table.Name).";
-@:        }
+@: export class @(table.Name)Collection extends MySQLCollections@(Html.Raw("<"))schema.M@(table.Name)> {
+@:     s = schema.@(table.Name)Schema;
+@:     f = schema.@(table.Name)Fields;    
+@:     constructor(db: MySQLDB) { 
+@:      super(db, schema.@(table.Name)Schema);
+@:     }
+@:    override async Fill(model:any, fields: string[] | schema.@(table.Name)Fields[] | schema.M@(table.Name), id: number): Promise@(Html.Raw("<"))DBResult> {
+@:        return await super.Fill(model, fields, id);
 @:    }
-
-@:    static async Get@(table.Name)(db: MySQLDB, fields: schema.I@(table.Name) | schema.@(table.Name)Fields[] | object, pkeys : { @( string.Join(",", table.PrimaryKeys.Select(pk => pk.Name + ":" + pk.MappedDataType.JSCodeType).ToArray()))}): Promise@(Html.Raw("<"))schema.I@(table.Name)> {
-@:        let sql: string = "";
-@:        sql = MySQLSQLStringsBuilder.GetSelectSQL(fields, schema.@(table.Name)Schema);
-@:          console.log(sql);
-@:        if (sql) {
-@:            let rows = await MySQLExec.ExecQueryRows(db.POOL, sql, pkeys);
-@:            if(rows.length > 0){
-@:               return rows[0] as schema.I@(table.Name);
-@:            }
-@:        } else {
-@:            throw "invalid get model on @(table.Name).";
-@:        }
-@:        return null;
+@:    override async Get(fields: string[] | schema.@(table.Name)Fields[] | schema.M@(table.Name), id: number): Promise@(Html.Raw("<"))schema.M@(table.Name)> {
+@:        return await super.Get(fields, id);
 @:    }
-
-@:    static async Where@(table.Name)(db: MySQLDB, fields: schema.I@(table.Name) | schema.@(table.Name)Fields[] | object, where: schema.I@(table.Name)): Promise@(Html.Raw("<"))schema.I@(table.Name)[]> {
-@:        let sql: string = "";
-@:        sql = MySQLSQLStringsBuilder.GetSelectWhereSQL(fields, where, schema.@(table.Name)Schema);
-@:        if (sql) {
-@:            return await MySQLExec.ExecQueryRows(db.POOL, sql, where);
-@:        } else {
-@:            throw "invalid model on where @(table.Name).";
-@:        }
+@:    override async Save(model: schema.M@(table.Name), config?: DBSaveConfig): Promise@(Html.Raw("<"))DBResult> {
+@:        return await super.Save(model, config);
 @:    }
-
-@:    static async Delete@(table.Name)(db: MySQLDB, model: schema.I@(table.Name)): Promise@(Html.Raw("<"))DBResult> {
-@:        let sql: string = "";
-@:        sql = MySQLSQLStringsBuilder.GetDeleteSQL(model, schema.@(table.Name)Schema);
-@:          console.log(sql);
-@:        if (sql) {
-@:            return MySQLExec.Exec(db.POOL, sql, model);
-@:        } else {
-@:            throw "invalid update model on @(table.Name).";
-@:        }
+@:    override async Where(fields: string[] | schema.@(table.Name)Fields[] | schema.M@(table.Name), where: schema.M@(table.Name)): Promise@(Html.Raw("<"))schema.M@(table.Name)[]> {
+@:        return await super.Where(fields, where);        
 @:    }
+@:    override async Delete(model: schema.M@(table.Name), config?: DBSaveConfig): Promise@(Html.Raw("<"))DBResult> {
+@:        return await super.Delete(model, config);
+@:    }
+@: }
 
-@:  }
 }

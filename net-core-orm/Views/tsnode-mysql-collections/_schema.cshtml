@@ -13,7 +13,7 @@ foreach (var col in table.Columns) {
 } //end for, Fields
 @:} //end Fields @(tablename)
 
-@:export interface I@(tablename) {
+@:export class M@(tablename) {
 
     foreach (var col in table.Columns)
     {
@@ -26,18 +26,28 @@ if (col.IsNullable)
 @:  @(col.Name)@(col.IsPrimaryKey ? "?" : "?"): @(col.MappedDataType.JSCodeType);
             }
     }
-@:} //end interface @(tablename)
+@:} //end class M@(tablename)
+
+@:export interface I@(tablename)TypeHelper@(Html.Raw("<"))T> {
+    foreach (var col in table.Columns)
+    {
+@:  @(col.Name)?: T;
+    }
+@:} //end interface TypeHelper @(tablename)
+
+@:export class  M@(tablename)ObjectRef  {
+    foreach (var col in table.Columns) {
+        @:  @(col.Name) = @(Html.Raw(col.MappedDataType.JSCodeTypeDefaultValue));
+    } //end for, Fields
+@:  }
 
 @:export const @(tablename)Schema = {
 @:    TableName: "@(tablename)",
 @:    PKeys: [@(Html.Raw(string.Join(",", table.PrimaryKeys.Select(i=> "\"" + i.Name + "\"").ToArray())))],
 @:    AutoField: "@table.Id.Name",
-@:    ObjectRef : {
-    foreach (var col in table.Columns) {
-        @:  @(col.Name) : @(Html.Raw(col.MappedDataType.JSCodeTypeDefaultValue)),
-    } //end for, Fields
-@:  },
-@:     Fields : @(tablename)Fields
+@:    ObjectRef : new M@(tablename)ObjectRef(),
+@:    Fields : @(tablename)Fields,
+@:    FieldsArr : Object.values(@(tablename)Fields)
 @:} //end schema @(tablename)
 
 } //end for each

@@ -1,21 +1,65 @@
 @using CoreORM
 @model DBDatabase
 @foreach(var table in Model.Tables){
-@:import { MySQLDB } from "../dbcrud/mysql_db";
-@:import { _@(table.Name)CollectionBase } from "../autogen/_collections_override";
-@:import { Validators, } from "../dbcrud/validators";
+@:import { @(table.Name)Collection } from "@(Html.Raw("@"))jms-core/autogen/_collections";
+@:import { I@(table.Name)TypeHelper } from "@(Html.Raw("@"))jms-core/autogen/_schema";
+@:import { @(table.Name) } from "./@(table.Name[0].ToString().ToLower())@(table.Name.Substring(1))_models";
+@:import { DBResult, DBSaveConfig } from "@(Html.Raw("@"))jms-core/database/models";
+@:import { IValidator, Validators, } from "@(Html.Raw("@"))jms-core/database/validators";
+@:import { AuthTokenObject } from "@(Html.Raw("@"))jms-core/models/authTokenObject";
+@:import { IData, IDataDeps } from "@(Html.Raw("@"))jms-core/models/dataDeps";
+@:import { DEFAULT_IGNORE_FIELDS_UPDATE } from "@(Html.Raw("@"))jms-core/models/enums";
+@:import { keys } from "lodash";
+
 @(Html.Raw("\r"))
-@:export let @(table.Name)InsertValidators = { Id: [Validators.MustMatch(0)] };
+@:let InsertValidators : I@(table.Name)TypeHelper@(Html.Raw("<"))IValidator[]> = { Id: [Validators.MustMatch(0)] };
 @(Html.Raw("\r"))
-@:export let @(table.Name)UpdateValidators = { Id: [Validators.NumGreater(0)] };
+@:let UpdateValidators : I@(table.Name)TypeHelper@(Html.Raw("<"))IValidator[]> = { Id: [Validators.NumGreater(0)] };
 @(Html.Raw("\r"))
-@:export let @(table.Name)DeleteValidators = { Id: [Validators.NumGreater(0)] };
+@:let DeleteValidators : I@(table.Name)TypeHelper@(Html.Raw("<"))IValidator[]> = { Id: [Validators.NumGreater(0)] };
 @(Html.Raw("\r"))
-@: export class @(table.Name)Collection extends _@(table.Name)CollectionBase {
-@:     constructor(database: MySQLDB) {
-@:         super();
-@:         this.db = database;
+
+@(Html.Raw("\r"))
+@: export class @(table.Name)Data implements IData {
+@:      coll: @(table.Name)Collection;
+@:     constructor(private deps: IDataDeps) {
+@:         this.coll = new @(table.Name)Collection(this.deps.DB);
 @:     }
+@:    async Fill(model: any, id: number): Promise@(Html.Raw("<"))DBResult> {
+@:        return this.coll.Fill(model, keys(model), id);
+@:    }
+@:    async Save(auth: AuthTokenObject, model: @(table.Name)): Promise@(Html.Raw("<"))DBResult> {
+@:        let result = new DBResult();
+@:        let saveconf: DBSaveConfig;
+@:
+@:        if (model.Id > 0) {
+@:            saveconf = {
+@:                userid: auth.Id,
+@:                validators: UpdateValidators,
+@:                ignorefields: [...DEFAULT_IGNORE_FIELDS_UPDATE]
+@:            };
+@:
+@:        } else {
+@:            saveconf = { userid: auth.Id, validators: InsertValidators };
+@:        }
+@:
+@:        result = await this.coll.Save(model, saveconf);
+@:        if (!result.Valid) {
+@:            result.MessageText = `unable to save ${this.coll.s.TableName}. ` + result.MessageText;
+@:        }
+@:
+@:        return result;
+@:    }
+@:    async Delete(auth: AuthTokenObject, id: number): Promise@(Html.Raw("<"))DBResult> {
+@:        return await this.coll.Delete({ Id: id }, { validators: DeleteValidators });
+@:    }
+@:
 @: }
-@://file:@(table.Name[0].ToString().ToLower())@(table.Name.Substring(1))Collection
+@://file:@(table.Name[0].ToString().ToLower())@(table.Name.Substring(1))_data
+@:import { M@(table.Name) } from "@(Html.Raw("@"))jms-core/autogen/_schema";
+@:
+@:export class @(table.Name) extends M@(table.Name) {
+@:    
+@:}
+@://file:@(table.Name[0].ToString().ToLower())@(table.Name.Substring(1))_models
 }

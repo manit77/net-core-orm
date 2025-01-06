@@ -161,6 +161,7 @@ AND information_schema.TABLE_CONSTRAINTS.TABLE_SCHEMA = '{dbName}';";
                 }
 
                 int ordcounter = 0;
+                
                 foreach (System.Data.DataRow rowCol in columns) {
                     ordcounter++;
                     DBColumn col = new DBColumn();

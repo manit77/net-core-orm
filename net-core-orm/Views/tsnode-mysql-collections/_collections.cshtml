@@ -1,6 +1,6 @@
 @using CoreORM
 @model DBDatabase
-import { MySQLDB } from "../database/mysql_db";
+import { Database } from "../database/database";
 import * as schema from "./_schema";
 import { MySQLCollections } from "../database/mysql_collections";
 import { DBResult, DBSaveConfig } from "../database/models";
@@ -10,14 +10,14 @@ import { DBResult, DBSaveConfig } from "../database/models";
 @: export class @(table.Name)Collection extends MySQLCollections@(Html.Raw("<"))schema.M@(table.Name)> {
 @:     s = schema.@(table.Name)Schema;
 @:     f = schema.@(table.Name)Fields;    
-@:     constructor(db: MySQLDB) { 
+@:     constructor(db: Database) { 
 @:      super(db, schema.@(table.Name)Schema);
 @:     }
-@:    override async Fill(model:any, fields: string[] | schema.@(table.Name)Fields[] | schema.M@(table.Name), id: number): Promise@(Html.Raw("<"))DBResult> {
-@:        return await super.Fill(model, fields, id);
+@:    override async Fill(model:any, fields: string[] | schema.@(table.Name)Fields[] | schema.M@(table.Name), pkeys: schema.I@(table.Name)PKeys): Promise@(Html.Raw("<"))DBResult> {
+@:        return await super.Fill(model, fields, pkeys);
 @:    }
-@:    override async Get(fields: string[] | schema.@(table.Name)Fields[] | schema.M@(table.Name), id: number): Promise@(Html.Raw("<"))schema.M@(table.Name)> {
-@:        return await super.Get(fields, id);
+@:    override async Get(fields: string[] | schema.@(table.Name)Fields[] | schema.M@(table.Name), pkeys: schema.I@(table.Name)PKeys): Promise@(Html.Raw("<"))schema.M@(table.Name)> {
+@:        return await super.Get(fields, pkeys);
 @:    }
 @:    override async Save(model: schema.M@(table.Name), config?: DBSaveConfig): Promise@(Html.Raw("<"))DBResult> {
 @:        return await super.Save(model, config);
@@ -25,8 +25,8 @@ import { DBResult, DBSaveConfig } from "../database/models";
 @:    override async Where(fields: string[] | schema.@(table.Name)Fields[] | schema.M@(table.Name), where: schema.M@(table.Name)): Promise@(Html.Raw("<"))schema.M@(table.Name)[]> {
 @:        return await super.Where(fields, where);        
 @:    }
-@:    override async Delete(model: schema.M@(table.Name), config?: DBSaveConfig): Promise@(Html.Raw("<"))DBResult> {
-@:        return await super.Delete(model, config);
+@:    override async Delete(pkeys: schema.I@(table.Name)PKeys, config?: DBSaveConfig): Promise@(Html.Raw("<"))DBResult> {
+@:        return await super.Delete(pkeys, config);
 @:    }
 @: }
 

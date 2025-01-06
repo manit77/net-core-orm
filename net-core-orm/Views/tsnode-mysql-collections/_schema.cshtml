@@ -40,11 +40,16 @@ if (col.IsNullable)
         @:  @(col.Name) = @(Html.Raw(col.MappedDataType.JSCodeTypeDefaultValue));
     } //end for, Fields
 @:  }
-
+@:export interface I@(tablename)PKeys {
+    foreach (var col in table.PrimaryKeys) {
+        @:  @(col.Name) : @(col.MappedDataType.JSCodeType),
+    } //end for, Fields
+@:}
 @:export const @(tablename)Schema = {
 @:    TableName: "@(tablename)",
 @:    PKeys: [@(Html.Raw(string.Join(",", table.PrimaryKeys.Select(i=> "\"" + i.Name + "\"").ToArray())))],
 @:    AutoField: "@table.Id.Name",
+@:    NewObjectRef : ()=> new M@(tablename)ObjectRef(),
 @:    ObjectRef : new M@(tablename)ObjectRef(),
 @:    Fields : @(tablename)Fields,
 @:    FieldsArr : Object.values(@(tablename)Fields)

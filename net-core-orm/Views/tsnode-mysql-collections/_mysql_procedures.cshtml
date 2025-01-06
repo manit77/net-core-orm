@@ -1,12 +1,12 @@
 @using CoreORM
 @model DBDatabase
 //Code generated using net-core-orm
-import { MySQLDB } from "../database/mysql_db";
+import { Database } from "../database/database";
 import { DBResult } from "../database/models";
 import { isArray } from "lodash";
 
 export class MySqlProcedures {
-    constructor(private d: MySQLDB) { }
+    constructor(private d: Database) { }
      ParseSearchResults(results: Array<any>): [Array<any>, number] {        
         // procedures contains
         // resultsData : [0] = [ rows, rows, ...ResultsHeader]

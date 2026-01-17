@@ -5,13 +5,15 @@ using System.Data;
 using System.Text.Json;
 
 
-namespace CoreORM {
+namespace CoreORM
+{
 
-    public class ORMMapperMySQL: IDBMapper
+    public class ORMMapperMySQL : IDBMapper
     {
-        
+
         public DBTypeMappings DataTypeMaps = new DBTypeMappings();
-        public ORMMapperMySQL() {
+        public ORMMapperMySQL()
+        {
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "bigint", CodeType = "Int64", CodeDBType = "System.Data.DbType.Int64", CodeTypeDefaultValue = "0", CodeDBTypeIsNullable = false, JSCodeType = "number", JSCodeTypeDefaultValue = "0" });
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "bigint", CodeType = "Int64", CodeDBType = "System.Data.DbType.Int64", CodeTypeDefaultValue = "0", CodeDBTypeIsNullable = false, JSCodeType = "number", JSCodeTypeDefaultValue = "0" });
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "binary", CodeType = "byte[]", CodeDBType = "System.Data.DbType.Binary", CodeTypeDefaultValue = "Array.Empty<byte>()", CodeDBTypeIsNullable = true, JSCodeType = "any", JSCodeTypeDefaultValue = "null" });
@@ -20,7 +22,7 @@ namespace CoreORM {
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "char", CodeType = "string", CodeDBType = "System.Data.DbType.String", CodeTypeDefaultValue = "string.Empty", CodeDBTypeIsNullable = true, JSCodeType = "string", JSCodeTypeDefaultValue = "\"\"" });
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "date", CodeType = "DateTime", CodeDBType = "System.Data.DbType.DateTime", CodeTypeDefaultValue = "System.Data.SqlTypes.SqlDateTime.MinValue", CodeDBTypeIsNullable = false, JSCodeType = "Date", JSCodeTypeDefaultValue = "new Date()" });
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "datetime", CodeType = "DateTime", CodeDBType = "System.Data.DbType.DateTime", CodeTypeDefaultValue = "System.Data.SqlTypes.SqlDateTime.MinValue", CodeDBTypeIsNullable = false, JSCodeType = "Date", JSCodeTypeDefaultValue = "new Date()" });
-            DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "datetimeoffset", CodeType = "DateTimeOffset", CodeDBType = "System.Data.DbType.DateTimeOffset", CodeTypeDefaultValue = "System.Data.SqlTypes.SqlDateTime.MinValue", CodeDBTypeIsNullable = false, JSCodeType = "Date", JSCodeTypeDefaultValue = "new Date()" });            
+            DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "datetimeoffset", CodeType = "DateTimeOffset", CodeDBType = "System.Data.DbType.DateTimeOffset", CodeTypeDefaultValue = "System.Data.SqlTypes.SqlDateTime.MinValue", CodeDBTypeIsNullable = false, JSCodeType = "Date", JSCodeTypeDefaultValue = "new Date()" });
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "decimal", CodeType = "decimal", CodeDBType = "System.Data.DbType.Decimal", CodeTypeDefaultValue = "0", CodeDBTypeIsNullable = false, JSCodeType = "number", JSCodeTypeDefaultValue = "0" });
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "double", CodeType = "double", CodeDBType = "System.Data.DbType.Double", CodeTypeDefaultValue = "0", CodeDBTypeIsNullable = false, JSCodeType = "number", JSCodeTypeDefaultValue = "0" });
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "float", CodeType = "double", CodeDBType = "System.Data.DbType.Double", CodeTypeDefaultValue = "0", CodeDBTypeIsNullable = false, JSCodeType = "number", JSCodeTypeDefaultValue = "0" });
@@ -29,8 +31,8 @@ namespace CoreORM {
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "hierarchyid", CodeType = "object", CodeDBType = "System.Data.DbType.Object", CodeTypeDefaultValue = "new object()", CodeDBTypeIsNullable = true, JSCodeType = "any", JSCodeTypeDefaultValue = "null" });
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "image", CodeType = "byte[]", CodeDBType = "System.Data.DbType.Binary", CodeTypeDefaultValue = "Array.Empty<byte>()", CodeDBTypeIsNullable = true, JSCodeType = "any", JSCodeTypeDefaultValue = "null" });
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "int", CodeType = "Int32", CodeDBType = "System.Data.DbType.Int32", CodeTypeDefaultValue = "0", CodeDBTypeIsNullable = false, JSCodeType = "number", JSCodeTypeDefaultValue = "0" });
-            
-            DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "longblob", CodeType = "string", CodeDBType = "System.Data.DbType.String", CodeTypeDefaultValue = "string.Empty", CodeDBTypeIsNullable = true, JSCodeType = "string", JSCodeTypeDefaultValue = "\"\"" }); 
+
+            DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "longblob", CodeType = "string", CodeDBType = "System.Data.DbType.String", CodeTypeDefaultValue = "string.Empty", CodeDBTypeIsNullable = true, JSCodeType = "string", JSCodeTypeDefaultValue = "\"\"" });
 
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "money", CodeType = "decimal", CodeDBType = "System.Data.DbType.Decimal", CodeTypeDefaultValue = "0", CodeDBTypeIsNullable = false, JSCodeType = "number", JSCodeTypeDefaultValue = "0" });
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "nchar", CodeType = "string", CodeDBType = "System.Data.DbType.String", CodeTypeDefaultValue = "string.Empty", CodeDBTypeIsNullable = true, JSCodeType = "string", JSCodeTypeDefaultValue = "\"\"" });
@@ -38,10 +40,10 @@ namespace CoreORM {
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "nvarchar", CodeType = "string", CodeDBType = "System.Data.DbType.String", CodeTypeDefaultValue = "string.Empty", CodeDBTypeIsNullable = true, JSCodeType = "string", JSCodeTypeDefaultValue = "\"\"" });
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "nvarchar", CodeType = "string", CodeDBType = "System.Data.DbType.String", CodeTypeDefaultValue = "string.Empty", CodeDBTypeIsNullable = true, JSCodeType = "string", JSCodeTypeDefaultValue = "\"\"" });
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "real", CodeType = "Single", CodeDBType = "System.Data.DbType.Double", CodeTypeDefaultValue = "0", CodeDBTypeIsNullable = false, JSCodeType = "number", JSCodeTypeDefaultValue = "0" });
-            
-            DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "smalldatetime", CodeType = "DateTime", CodeDBType = "System.Data.DbType.DateTime", CodeTypeDefaultValue = "System.Data.SqlTypes.SqlDateTime.MinValue", CodeDBTypeIsNullable = false, JSCodeType = "Date"     , JSCodeTypeDefaultValue = "new Date()" });
-            DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "smallint"    , CodeType = "Int16"    , CodeDBType = "System.Data.DbType.Int16"   , CodeTypeDefaultValue = "0"                                        , CodeDBTypeIsNullable = false, JSCodeType = "Date"     , JSCodeTypeDefaultValue = "new Date()" });
-            DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "smallmoney"  , CodeType = "decimal"  , CodeDBType = "System.Data.DbType.Decimal" , CodeTypeDefaultValue = "0"                                        , CodeDBTypeIsNullable = false, JSCodeType = "number"   , JSCodeTypeDefaultValue = "0" });
+
+            DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "smalldatetime", CodeType = "DateTime", CodeDBType = "System.Data.DbType.DateTime", CodeTypeDefaultValue = "System.Data.SqlTypes.SqlDateTime.MinValue", CodeDBTypeIsNullable = false, JSCodeType = "Date", JSCodeTypeDefaultValue = "new Date()" });
+            DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "smallint", CodeType = "Int16", CodeDBType = "System.Data.DbType.Int16", CodeTypeDefaultValue = "0", CodeDBTypeIsNullable = false, JSCodeType = "Date", JSCodeTypeDefaultValue = "new Date()" });
+            DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "smallmoney", CodeType = "decimal", CodeDBType = "System.Data.DbType.Decimal", CodeTypeDefaultValue = "0", CodeDBTypeIsNullable = false, JSCodeType = "number", JSCodeTypeDefaultValue = "0" });
 
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "sql_variant", CodeType = "object", CodeDBType = "System.Data.DbType.Object", CodeTypeDefaultValue = "new object()", CodeDBTypeIsNullable = true, JSCodeType = "any", JSCodeTypeDefaultValue = "null" });
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "text", CodeType = "string", CodeDBType = "System.Data.DbType.String", CodeTypeDefaultValue = "string.Empty", CodeDBTypeIsNullable = true, JSCodeType = "string", JSCodeTypeDefaultValue = "\"\"" });
@@ -49,7 +51,7 @@ namespace CoreORM {
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "mediumtext", CodeType = "string", CodeDBType = "System.Data.DbType.String", CodeTypeDefaultValue = "string.Empty", CodeDBTypeIsNullable = true, JSCodeType = "string", JSCodeTypeDefaultValue = "\"\"" });
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "time", CodeType = "TimeSpan", CodeDBType = "System.Data.DbType.Time", CodeTypeDefaultValue = "new object()", CodeDBTypeIsNullable = true, JSCodeType = "string", JSCodeTypeDefaultValue = "\"\"" });
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "timestamp", CodeType = "byte[]", CodeDBType = "System.Data.DbType.Binary", CodeTypeDefaultValue = "Array.Empty<byte>()", CodeDBTypeIsNullable = true, JSCodeType = "string", JSCodeTypeDefaultValue = "\"\"" });
-            
+
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "tinyint", CodeType = "bool", CodeDBType = "System.Data.DbType.Boolean", CodeTypeDefaultValue = "false", CodeDBTypeIsNullable = true, JSCodeType = "boolean", JSCodeTypeDefaultValue = "false" });
 
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "uniqueidentifier", CodeType = "Guid", CodeDBType = "System.Data.DbType.Guid", CodeTypeDefaultValue = "new Guid()", CodeDBTypeIsNullable = true, JSCodeType = "string", JSCodeTypeDefaultValue = "\"\"" });
@@ -62,18 +64,21 @@ namespace CoreORM {
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "table", CodeType = "DataTable", CodeDBType = "", CodeTypeDefaultValue = "", CodeDBTypeIsNullable = false, JSCodeType = "any", JSCodeTypeDefaultValue = "null" });
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "null", CodeType = "null", CodeDBType = "", CodeTypeDefaultValue = "", CodeDBTypeIsNullable = false, JSCodeType = "any", JSCodeTypeDefaultValue = "null" });
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "numeric", CodeType = "decimal", CodeDBType = "System.Data.DbType.Decimal", CodeTypeDefaultValue = "0", CodeDBTypeIsNullable = false, JSCodeType = "number", JSCodeTypeDefaultValue = "0" });
-                       
+
         }
 
-        public DBTypeMap GetDBTypeMap_ByDataBaseType (string databaseType) {
+        public DBTypeMap GetDBTypeMap_ByDataBaseType(string databaseType)
+        {
             var t = (from i in DataTypeMaps where i.DatabaseType == databaseType.ToLower() select i).FirstOrDefault();
-            if (t == null) {
+            if (t == null)
+            {
                 throw new Exception("Database Type not found " + databaseType);
             }
             return t;
         }
 
-        public DBDatabase GetMapping (string dbName, string codeNameSpace, string connectionstring, List<DBORMMappings> mappingsList) {
+        public DBDatabase GetMapping(string dbName, string codeNameSpace, string connectionstring, List<DBORMMappings> mappingsList)
+        {
             DBDatabase database = new DBDatabase();
             database.Name = dbName;
             database.CodeNameSpace = codeNameSpace;
@@ -83,7 +88,7 @@ namespace CoreORM {
             database.DB = db;
 
             string sql = "";
-            
+
             #region assign datatables
             sql = $@"
 SELECT * 
@@ -139,12 +144,14 @@ AND information_schema.TABLE_CONSTRAINTS.TABLE_SCHEMA = '{dbName}';";
 
             #endregion
 
-            foreach (System.Data.DataRow row in dtTables.Rows) {
-                if ((string)row["table_type"] != "BASE TABLE") {
+            foreach (System.Data.DataRow row in dtTables.Rows)
+            {
+                if ((string)row["table_type"] != "BASE TABLE")
+                {
                     continue;
                 }
 
-                DBTable table = new DBTable();
+                DBTable table = new();
                 table.Database = database;
                 table.Name = (string)row["table_name"];
                 table.Schema = (string)row["table_schema"];
@@ -156,27 +163,36 @@ AND information_schema.TABLE_CONSTRAINTS.TABLE_SCHEMA = '{dbName}';";
 
                 //CoreUtils.Data.ParseIt<int>(1);
 
-                if (table.Name == "EnumsList") {
+                if (table.Name == "EnumsList")
+                {
                     Console.Write("");
                 }
 
                 int ordcounter = 0;
-                
-                foreach (System.Data.DataRow rowCol in columns) {
+
+                foreach (System.Data.DataRow rowCol in columns)
+                {
                     ordcounter++;
-                    DBColumn col = new DBColumn();
+                    DBColumn col = new();
                     col.Name = CoreUtils.Data.ParseIt<string>(rowCol["column_name"]);
+
+                    if (col.Name == "OffenseLocation")
+                    {
+                        Console.WriteLine($"{col.Name}");
+                    }
+
                     col.DBType = CoreUtils.Data.ParseIt<string>(rowCol["data_type"]);
                     col.MappedDataType = GetDBTypeMap_ByDataBaseType(col.DBType);
-                    col.MaxLength = CoreUtils.Data.ParseIt<int>(rowCol["CHARACTER_MAXIMUM_LENGTH"]);
+                    col.MaxLength = CoreUtils.Data.ParseIt<long>(rowCol["CHARACTER_MAXIMUM_LENGTH"]);
                     col.IsNullable = (CoreUtils.Data.ParseIt<string>(rowCol["IS_NULLABLE"]) == "YES") ? true : false;
                     col.DefaultValue = CoreUtils.Data.ParseIt<string>(rowCol["COLUMN_DEFAULT"]);
-                    col.Precision = CoreUtils.Data.ParseIt<int>(rowCol["NUMERIC_PRECISION"]);                    
+                    col.Precision = CoreUtils.Data.ParseIt<int>(rowCol["NUMERIC_PRECISION"]);
                     col.IsPrimaryKey = (CoreUtils.Data.ParseIt<string>(rowCol["COLUMN_KEY"]) == "PRI") ? true : false;
                     col.IsIdentity = (CoreUtils.Data.ParseIt<string>(rowCol["EXTRA"]) == "auto_increment") ? true : false;
                     col.Ordinal = ordcounter;
 
-                    if (col.Name.ToLower() == "id") {
+                    if (col.Name.ToLower() == "id")
+                    {
                         table.Id = col;
                     }
 
@@ -185,7 +201,8 @@ AND information_schema.TABLE_CONSTRAINTS.TABLE_SCHEMA = '{dbName}';";
                         Console.WriteLine($"{col.Name}={col.MappedDataType.JSCodeType}");
                     }
 
-                    if (col.IsPrimaryKey) {
+                    if (col.IsPrimaryKey)
+                    {
                         table.PrimaryKeys.Add(col);
                     }
 
@@ -195,24 +212,33 @@ AND information_schema.TABLE_CONSTRAINTS.TABLE_SCHEMA = '{dbName}';";
                                         && i.MapType == "Column"
                                       select i).FirstOrDefault();
 
-                    if (colMapping != null && colMapping.FormMeta.Length > 0) {
-                        try {
+                    if (colMapping != null && colMapping.FormMeta.Length > 0)
+                    {
+                        try
+                        {
                             col.Mapping = JsonSerializer.Deserialize<DBORMColumnMap>(colMapping.FormMeta);
-                        } catch (Exception exp) {
+                        }
+                        catch (Exception exp)
+                        {
                             Console.WriteLine(exp.ToString());
                             throw new Exception("Unable to parse column mapping for " + table.Name + "." + col.Name);
                         }
-                    } else {
+                    }
+                    else
+                    {
                         //create default column mapping
-                        if(col.Name == "DateCreated" || col.Name == "DateTimeCreated") {
+                        if (col.Name == "DateCreated" || col.Name == "DateTimeCreated")
+                        {
                             //for datecreated fields mark as readonly
                             col.Mapping = new DBORMColumnMap();
                             col.Mapping.ForDBTable = table;
                             col.Mapping.DisplayName = "Created";
                             col.Mapping.ForTableName = table.Name;
                             col.Mapping.InputType = "label";
-                            col.Mapping.ReadOnly = true;                            
-                        } else if (col.Name == "DateModified") {
+                            col.Mapping.ReadOnly = true;
+                        }
+                        else if (col.Name == "DateModified")
+                        {
                             col.Mapping = new DBORMColumnMap();
                             col.Mapping.ForDBTable = table;
                             col.Mapping.DisplayName = "Modified";
@@ -226,7 +252,8 @@ AND information_schema.TABLE_CONSTRAINTS.TABLE_SCHEMA = '{dbName}';";
                 }
 
                 //validate table
-                if (table.PrimaryKeys.Count == 0) {
+                if (table.PrimaryKeys.Count == 0)
+                {
                     throw new Exception("table " + table.Name + " missing primary keys.");
                 }
 
@@ -235,10 +262,14 @@ AND information_schema.TABLE_CONSTRAINTS.TABLE_SCHEMA = '{dbName}';";
                                     && i.MapType == "Table"
                                     select i).FirstOrDefault();
 
-                if (tableMapping != null && tableMapping.FormMeta.Length > 0) {
-                    try {
+                if (tableMapping != null && tableMapping.FormMeta.Length > 0)
+                {
+                    try
+                    {
                         table.Mapping = JsonSerializer.Deserialize<DBORMTableMap>(tableMapping.FormMeta);
-                    } catch (Exception exp) {
+                    }
+                    catch (Exception exp)
+                    {
                         Console.WriteLine(exp.ToString());
                         throw new Exception("Unable to parse table mapping for " + table.Name);
                     }
@@ -308,9 +339,12 @@ AND information_schema.TABLE_CONSTRAINTS.TABLE_SCHEMA = '{dbName}';";
             //discovery one to many mappings, Rules:
             //TableName + And + TableName
             //2 foreign keys, belongs to first TableName
-            foreach (var linkerTable in database.Tables) {
-                if (linkerTable.Name.Contains("And")) {
-                    if (linkerTable.Foreign_Keys.Count == 2) {
+            foreach (var linkerTable in database.Tables)
+            {
+                if (linkerTable.Name.Contains("And"))
+                {
+                    if (linkerTable.Foreign_Keys.Count == 2)
+                    {
                         string[] tableNames = linkerTable.Name.Split("And");
                         string oneTableName = tableNames[0];
                         string manyTableName = tableNames[1];
@@ -318,25 +352,32 @@ AND information_schema.TABLE_CONSTRAINTS.TABLE_SCHEMA = '{dbName}';";
                         var oneTable = database.Tables.Where(i => i.Name == oneTableName).FirstOrDefault();
                         var manyTable = database.Tables.Where(i => i.Name == manyTableName).FirstOrDefault();
 
-                        if (oneTable != null && manyTable != null && oneTable != manyTable) {
-                            if (oneTable.PrimaryKeys.Count == 1 && manyTable.PrimaryKeys.Count == 1) {
+                        if (oneTable != null && manyTable != null && oneTable != manyTable)
+                        {
+                            if (oneTable.PrimaryKeys.Count == 1 && manyTable.PrimaryKeys.Count == 1)
+                            {
 
                                 var linkerMap = (from i in mappingsList
                                                  where i.TableName == linkerTable.Name
                                                  && i.MapType == "OneToMany"
                                                  select i).FirstOrDefault();
 
-                                if (linkerMap != null && linkerMap.FormMeta.Length > 0) {
-                                    try {
+                                if (linkerMap != null && linkerMap.FormMeta.Length > 0)
+                                {
+                                    try
+                                    {
                                         linkerTable.OneToManyMapping = JsonSerializer.Deserialize<DBORMColumnMap>(linkerMap.FormMeta);
-                                    } catch (Exception exp) {
+                                    }
+                                    catch (Exception exp)
+                                    {
                                         Console.WriteLine(exp.ToString());
                                         throw new Exception("Unable to parse ForeignKey mapping for " + linkerTable.Name);
                                     }
                                 }
 
                                 //add to one to many list
-                                oneTable.OneToManyList.Add(new DBOneToMany() {
+                                oneTable.OneToManyList.Add(new DBOneToMany()
+                                {
                                     LinkerTable = linkerTable,
                                     OneTable = oneTable,
                                     ManyTable = manyTable
@@ -349,52 +390,68 @@ AND information_schema.TABLE_CONSTRAINTS.TABLE_SCHEMA = '{dbName}';";
 
             //discover ManyForOne
             //Rules: TableName + For + TableName
-            foreach (var table in database.Tables) {
-                if (table.Name.Contains("For")) {
+            foreach (var table in database.Tables)
+            {
+                if (table.Name.Contains("For"))
+                {
 
                     var manyTable = table;
                     string[] tableNames = table.Name.Split("For");
 
                     string oneTableName = tableNames[1];
                     var oneTable = database.Tables.Where(i => i.Name == oneTableName).FirstOrDefault();
-                    if (oneTable != null) {
+                    if (oneTable != null)
+                    {
                         DBForeignKey oneFK = null;
                         DBForeignKey manyFK = null;
 
-                        if (oneTable.Foreign_Keys != null) {
-                            foreach (var fk in oneTable.Foreign_Keys) {
-                                if (fk.ForeignTable == manyTable) {
-                                    oneFK = fk;                                    
+                        if (oneTable.Foreign_Keys != null)
+                        {
+                            foreach (var fk in oneTable.Foreign_Keys)
+                            {
+                                if (fk.ForeignTable == manyTable)
+                                {
+                                    oneFK = fk;
                                 }
                             }
                         }
 
-                        if (manyTable.Foreign_Keys != null) {
-                            foreach (var fk in manyTable.Foreign_Keys) {
-                                if (fk.ForeignTable == oneTable) {
+                        if (manyTable.Foreign_Keys != null)
+                        {
+                            foreach (var fk in manyTable.Foreign_Keys)
+                            {
+                                if (fk.ForeignTable == oneTable)
+                                {
                                     manyFK = fk;
                                 }
                             }
                         }
 
-                        if (oneTable != null && manyTable != null && oneTable != manyTable) {
-                            if (oneTable.PrimaryKeys.Count == 1 && manyTable.PrimaryKeys.Count == 1) {
+                        if (oneTable != null && manyTable != null && oneTable != manyTable)
+                        {
+                            if (oneTable.PrimaryKeys.Count == 1 && manyTable.PrimaryKeys.Count == 1)
+                            {
 
                                 var manyMap = (from i in mappingsList
                                                where i.TableName == manyTable.Name
                                                && i.MapType == "ManyForOne"
                                                select i).FirstOrDefault();
 
-                                if (manyMap != null && manyMap.FormMeta.Length > 0) {
-                                    try {
+                                if (manyMap != null && manyMap.FormMeta.Length > 0)
+                                {
+                                    try
+                                    {
                                         manyTable.ManyForOneMapping = JsonSerializer.Deserialize<DBORMColumnMap>(manyMap.FormMeta);
-                                    } catch {
+                                    }
+                                    catch
+                                    {
                                         throw new Exception("Unable to parse ForeignKey mapping for " + manyTable.Name);
                                     }
                                 }
 
                                 //add to one to many list
-                                oneTable.ManyForOneList.Add(new DBManyForOne() {
+                                oneTable.ManyForOneList.Add(new DBManyForOne()
+                                {
                                     OneTable = oneTable,
                                     ManyTable = manyTable,
                                     OneFK = oneFK,
@@ -407,32 +464,41 @@ AND information_schema.TABLE_CONSTRAINTS.TABLE_SCHEMA = '{dbName}';";
             }
 
             //generate sql for (ManyForOne)
-            foreach (var table in database.Tables) {
-                if(table.ManyForOneList != null) {
-                    foreach (var one in table.ManyForOneList) {
+            foreach (var table in database.Tables)
+            {
+                if (table.ManyForOneList != null)
+                {
+                    foreach (var one in table.ManyForOneList)
+                    {
                         //string sql = $"select * from BuildsForStoreAssets where StoreAssetId={dbmodel.Id}";
-                        if(one.ManyFK == null)
+                        if (one.ManyFK == null)
                         {
                             continue;
                         }
                         string valueField = "Id";
                         string textField = "Id";
-                        var nameCol = one.ManyTable.GetColumn("Name");                        
-                        
-                        if (nameCol != null) {
-                            textField = nameCol.Name;                            
-                        } else {
+                        var nameCol = one.ManyTable.GetColumn("Name");
+
+                        if (nameCol != null)
+                        {
+                            textField = nameCol.Name;
+                        }
+                        else
+                        {
                             var descCol = one.ManyTable.GetColumn("Description");
-                            if (descCol != null) {
+                            if (descCol != null)
+                            {
                                 textField = descCol.Name;
                             }
                         }
 
                         one.SQL_Many = $"select Value={valueField}, Text={textField} from " + one.ManyTable.Name + " where " + one.ManyFK.Column.Name + " = {dbmodel.Id} order by " + $"{textField}";
-                        
+
                         //if a column mapping does not exists create a default one
-                        if (one.OneFK != null && one.OneFK.Column.Mapping == null) {
-                            one.OneFK.Column.Mapping = new DBORMColumnMap() {                                
+                        if (one.OneFK != null && one.OneFK.Column.Mapping == null)
+                        {
+                            one.OneFK.Column.Mapping = new DBORMColumnMap()
+                            {
                                 Visible = true,
                                 Required = false,
                                 InputType = "select"
@@ -443,21 +509,28 @@ AND information_schema.TABLE_CONSTRAINTS.TABLE_SCHEMA = '{dbName}';";
             }
 
             //generate sql for LinkerTable (OneToMany)
-            foreach (var table in database.Tables) {
-                foreach (var oneToMany in table.OneToManyList) {
+            foreach (var table in database.Tables)
+            {
+                foreach (var oneToMany in table.OneToManyList)
+                {
                     string paramsList = "";
                     DBForeignKey fkOneColumn = null;
                     DBForeignKey fkManyColumn = null;
                     //there are only two forieng keys
-                    foreach (var fk in oneToMany.LinkerTable.Foreign_Keys) {
-                        if (oneToMany.OneTable.Name == fk.ForeignTable.Name) {
+                    foreach (var fk in oneToMany.LinkerTable.Foreign_Keys)
+                    {
+                        if (oneToMany.OneTable.Name == fk.ForeignTable.Name)
+                        {
                             fkOneColumn = fk;
                             //get the column name of the oneToMany.Table
-                            if (paramsList.Length > 0) {
+                            if (paramsList.Length > 0)
+                            {
                                 paramsList = paramsList + ",";
                             }
                             paramsList = fk.Column.MappedDataType.CodeType + " " + fk.Column.Name;
-                        } else {
+                        }
+                        else
+                        {
                             fkManyColumn = fk;
                         }
                     }
@@ -495,7 +568,8 @@ where {LinkerTable.Name}.{OneColumn.Name}= @{OneColumn.Name}";
             }
 
             //load views
-            foreach (System.Data.DataRow row in dtViews.Rows) {
+            foreach (System.Data.DataRow row in dtViews.Rows)
+            {
                 DBTable table = new DBTable();
                 table.Name = (string)row["table_name"];
                 table.Schema = (string)row["table_schema"];
@@ -503,7 +577,8 @@ where {LinkerTable.Name}.{OneColumn.Name}= @{OneColumn.Name}";
                 var columns = (from i in dtColumns.AsEnumerable()
                                where i.Field<string>("table_name") == table.Name
                                select i);
-                foreach (System.Data.DataRow rowCol in columns) {
+                foreach (System.Data.DataRow rowCol in columns)
+                {
                     DBColumn col = new DBColumn();
                     col.Name = CoreUtils.Data.ParseIt<string>(rowCol["column_name"]);
                     col.DBType = CoreUtils.Data.ParseIt<string>(rowCol["data_type"]);
@@ -520,26 +595,30 @@ where {LinkerTable.Name}.{OneColumn.Name}= @{OneColumn.Name}";
             }
 
             //load procedures
-            foreach (System.Data.DataRow row in dtProcedures.Rows) {
+            foreach (System.Data.DataRow row in dtProcedures.Rows)
+            {
                 DBProcedure proc = new DBProcedure();
                 proc.Name = (string)row["SPECIFIC_NAME"];
                 proc.Schema = (string)row["ROUTINE_SCHEMA"];
 
                 string dbtype = CoreUtils.Data.ParseIt<string>(row["DATA_TYPE"]);
-                if (dbtype.Length > 0) {
+                if (dbtype.Length > 0)
+                {
                     proc.MappedDataType = GetDBTypeMap_ByDataBaseType(dbtype);
                 }
 
                 proc.Type = CoreUtils.Data.ParseIt<string>(row["ROUTINE_TYPE"]);
 
-                if (proc.Name != "GetSchema") {
+                if (proc.Name != "GetSchema")
+                {
                     //get all columns
                     var columns = (from i in dtParamaters.AsEnumerable()
                                    where i.Field<string>("SPECIFIC_NAME") == proc.Name
                                    orderby i.Field<int>("ORDINAL_POSITION")
                                    select i);
                     int paramIndex = 0;
-                    foreach (System.Data.DataRow rowParam in columns) {
+                    foreach (System.Data.DataRow rowParam in columns)
+                    {
                         paramIndex++;
                         DBParamater paramater = new DBParamater();
                         paramater.Name = CoreUtils.Data.ParseIt<string>(rowParam["PARAMETER_NAME"]);
@@ -570,7 +649,8 @@ where {LinkerTable.Name}.{OneColumn.Name}= @{OneColumn.Name}";
             //}
 
             //generate SQL Statements for each table
-            foreach (DBTable table in database.Tables) {
+            foreach (DBTable table in database.Tables)
+            {
                 table.SQL_ScopeId = " select LAST_INSERT_ID() as {param_identity};";
                 table.SQL_Select = " select {select_fields} from {tablename} where {params_where};";
                 table.SQL_Insert = " insert into {tablename} ({insert_columns_list})VALUES({insert_params_list});";
@@ -586,17 +666,21 @@ where {LinkerTable.Name}.{OneColumn.Name}= @{OneColumn.Name}";
                 string select_fields = string.Empty;
 
                 tablename = table.Name;
-                if (table.Id != null) {
+                if (table.Id != null)
+                {
                     param_identity = table.Id.Name;
                 }
 
-                foreach (var col in table.Columns) {
-                    if (select_fields.Length > 0) {
+                foreach (var col in table.Columns)
+                {
+                    if (select_fields.Length > 0)
+                    {
                         select_fields = select_fields + ",";
                     }
                     select_fields += col.Name;
 
-                    if (col.MappedDataType.DatabaseType == "timestamp") {
+                    if (col.MappedDataType.DatabaseType == "timestamp")
+                    {
                         //skip timestamp
                         continue;
                     }
@@ -627,8 +711,10 @@ where {LinkerTable.Name}.{OneColumn.Name}= @{OneColumn.Name}";
 
                     }
 
-                    if (col.IsPrimaryKey) {
-                        if (params_where.Length > 0) {
+                    if (col.IsPrimaryKey)
+                    {
+                        if (params_where.Length > 0)
+                        {
                             params_where = params_where + ",";
                         }
                         params_where += col.Name + "=:" + col.Name;
@@ -659,8 +745,10 @@ where {LinkerTable.Name}.{OneColumn.Name}= @{OneColumn.Name}";
         /// populate the output and isnullable flag for params
         /// </summary>
         /// <param name="proc"></param>
-        public void ProcessParam (DBProcedure proc) {
-            if (proc.Name == "GetAppsConfigs") {
+        public void ProcessParam(DBProcedure proc)
+        {
+            if (proc.Name == "GetAppsConfigs")
+            {
                 Console.WriteLine("DEBUG:" + proc.Name);
             }
 
@@ -671,17 +759,22 @@ where {LinkerTable.Name}.{OneColumn.Name}= @{OneColumn.Name}";
             int poscreate = definition.IndexOf("("); //find first @
             int posAs = 0;
 
-            if (proc.Type.ToLower() == "procedure") {
+            if (proc.Type.ToLower() == "procedure")
+            {
                 posAs = definition.IndexOf(" as");
-            } else {
+            }
+            else
+            {
                 posAs = definition.IndexOf(" returns");
             }
 
-            if (posAs > poscreate && posAs > 0 && poscreate > 0) {
+            if (posAs > poscreate && posAs > 0 && poscreate > 0)
+            {
                 //(@skip int = 0,@take int = 1000,@query varchar(100) = '',@sortfield varchar(100) = '',@sortdir varchar(100) = '')
                 string paramdefinition = definition.Substring(poscreate, posAs - poscreate);
 
-                if (!paramdefinition.StartsWith("(") && !paramdefinition.EndsWith(")")) {
+                if (!paramdefinition.StartsWith("(") && !paramdefinition.EndsWith(")"))
+                {
                     throw new Exception("Params defined in stored procedure must start with ( and end with )");
                 }
 
@@ -691,40 +784,51 @@ where {LinkerTable.Name}.{OneColumn.Name}= @{OneColumn.Name}";
                 proc.DefParams = paramdefinition;
 
                 List<dynamic> positions = new List<dynamic>();
-                Action<DBParamater> getDef = (DBParamater x) => {
-                    try {
+                Action<DBParamater> getDef = (DBParamater x) =>
+                {
+                    try
+                    {
                         x.DefParam = proc.DefParams.Substring(x.DefPosStart, x.DefPosEnd - x.DefPosStart);
                         x.DefParam = x.DefParam.Trim();
                         x.DefParam = CoreUtils.Data.RemoveLastOf(x.DefParam, ",").Trim();
-                    } catch {
+                    }
+                    catch
+                    {
                         throw new Exception("Failed to parse paramter " + x.Name + " for procedure " + proc.Name);
                     }
                 };
 
-                for (int j = 0; j < proc.Paramaters.Count; j++) {
+                for (int j = 0; j < proc.Paramaters.Count; j++)
+                {
                     DBParamater param = proc.Paramaters[j];
                     DBParamater paramNext = null;
 
-                    if (j + 1 < proc.Paramaters.Count) {
+                    if (j + 1 < proc.Paramaters.Count)
+                    {
                         paramNext = proc.Paramaters[j + 1];
                     }
                     param.DefPosStart = paramdefinition.IndexOf("@" + param.Name.ToLower());
-                    if (paramNext != null) {
+                    if (paramNext != null)
+                    {
                         param.DefPosEnd = paramdefinition.IndexOf("@" + paramNext.Name.ToLower());
-                    } else {
+                    }
+                    else
+                    {
                         param.DefPosEnd = proc.DefParams.Length;
                     }
                     getDef.Invoke(param);
                 }
 
-                for (int j = 0; j < proc.Paramaters.Count; j++) {
+                for (int j = 0; j < proc.Paramaters.Count; j++)
+                {
                     #region
 
                     var param = proc.Paramaters[j];
                     param.IsNullable = false;
 
                     //@userid int = null output)
-                    if (param.DefParam.Contains("=")) {
+                    if (param.DefParam.Contains("="))
+                    {
                         string[] paradefs = param.DefParam.Trim().Split('=');
                         string paramNamePart = paradefs[0].Trim(); //@userid int
                         string paramValuePart = paradefs[1].Trim(); //null output
@@ -733,15 +837,20 @@ where {LinkerTable.Name}.{OneColumn.Name}= @{OneColumn.Name}";
                         param.IsNullable = true;
                         param.HasDefaultValue = true;
 
-                        if (paramValuePart.EndsWith(" output")) {
+                        if (paramValuePart.EndsWith(" output"))
+                        {
                             param.IsOutPut = true;
                             paramValuePart = CoreUtils.Data.RemoveLastOf(paramValuePart, " output");
                         }
 
-                        if (paramValuePart.EndsWith("null")) {
+                        if (paramValuePart.EndsWith("null"))
+                        {
                             param.DefaultValue = "null";
-                        } else {
-                            if (paramValuePart.StartsWith("'") && paramValuePart.EndsWith("'")) {
+                        }
+                        else
+                        {
+                            if (paramValuePart.StartsWith("'") && paramValuePart.EndsWith("'"))
+                            {
                                 param.DefaultValue = paramValuePart;
                                 param.DefaultValue = CoreUtils.Data.RemoveLastOf(param.DefaultValue, "'");
                                 param.DefaultValue = CoreUtils.Data.RemoveFirstOf(param.DefaultValue, "'");
@@ -749,7 +858,8 @@ where {LinkerTable.Name}.{OneColumn.Name}= @{OneColumn.Name}";
                             }
                         }
                     }
-                    if (param.DefParam.EndsWith(" output")) {
+                    if (param.DefParam.EndsWith(" output"))
+                    {
                         param.IsOutPut = true;
                     }
 

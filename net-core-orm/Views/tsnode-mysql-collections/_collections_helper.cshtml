@@ -25,6 +25,10 @@
 @:     constructor(private deps: IDataDeps) {
 @:         this.coll = new @(table.Name)Collection(this.deps.DB);
 @:     }
+@:     New() {
+@:         let model = new @(table.Name)();
+@:         return model;
+@:    }
 @:    async Fill(model: any, id: number): Promise@(Html.Raw("<"))DBResult> {
 @:        return this.coll.Fill(model, keys(model), id);
 @:    }
@@ -58,7 +62,7 @@
 @://file:@(table.Name[0].ToString().ToLower())@(table.Name.Substring(1))_data
 @:import { M@(table.Name) } from "@(Html.Raw("@"))jms-core/autogen/_schema";
 @:
-@:export class @(table.Name) extends M@(table.Name) {
+@:export class @(table.Name) extends  M@(table.Name) {
 @:    
 @:}
 @://file:@(table.Name[0].ToString().ToLower())@(table.Name.Substring(1))_models

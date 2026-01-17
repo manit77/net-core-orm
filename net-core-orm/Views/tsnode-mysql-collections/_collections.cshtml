@@ -1,9 +1,9 @@
 @using CoreORM
 @model DBDatabase
-import { Database } from "../database/database";
-import * as schema from "./_schema";
-import { MySQLCollections } from "../database/mysql_collections";
-import { DBResult, DBSaveConfig } from "../database/models";
+import { Database } from "../database/database.js";
+import * as schema from "./_schema.js";
+import { MySQLCollections } from "../database/mysql_collections.js";
+import { DBResult, DBSaveConfig } from "../database/models.js";
 
 @foreach(var table in Model.Tables) {
 

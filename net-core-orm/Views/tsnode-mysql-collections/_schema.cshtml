@@ -37,7 +37,14 @@ if (col.IsNullable)
 
 @:export class  M@(tablename)ObjectRef  {
     foreach (var col in table.Columns) {
+        if(col.IsNullable || col.Name.StartsWith("Date"))
+        {            
+        @:  @(col.Name): @(col.MappedDataType.JSCodeType) | null = null;
+        }
+        else
+        {            
         @:  @(col.Name) = @(Html.Raw(col.MappedDataType.JSCodeTypeDefaultValue));
+        }
     } //end for, Fields
 @:  }
 @:export interface I@(tablename)PKeys {

@@ -94,10 +94,10 @@ export class EnumNames {
 }
 
 interface IAuthRole {
-    id : number,
-    name : string,
-    description : string,
-    rank : number
+    Id : number,
+    Name : string,
+    Description : string,
+    Rank : number
 }
 
 export const AuthRoleAlls = {
@@ -105,10 +105,10 @@ export const AuthRoleAlls = {
     foreach (System.Data.DataRow dr in dtAuthRoles.Rows)
     {
 @:@(dr["Name"]) : {
-@:    id: @(dr["Id"]),
-@:    name: "@(dr["Name"])",
-@:    description: "@(dr["Description"])",
-@:    rank: @(dr["rank"])
+@:    Id: @(dr["Id"]),
+@:    Name: "@(dr["Name"])",
+@:    Description: "@(dr["Description"])",
+@:    Rank: @(dr["Rank"])
 @:    } as IAuthRole,
     }
 @:} as const;    

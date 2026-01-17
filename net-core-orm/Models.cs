@@ -135,7 +135,7 @@ namespace CoreORM
         public DBTypeMap MappedDataType = null;
         public bool IsNullable = false;
         public string DefaultValue = string.Empty;
-        public int MaxLength = 0;
+        public long MaxLength = 0;
         public int Precision = 0;
         public bool IsPrimaryKey = false;
         public bool IsIdentity = false;

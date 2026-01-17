@@ -1,9 +1,9 @@
 @using CoreORM
 @model DBDatabase
 //Code generated using net-core-orm
-import { Database } from "../database/database";
-import { DBResult } from "../database/models";
-import { isArray } from "lodash";
+import { Database } from "../database/database.js";
+import { DBResult } from "../database/models.js";
+import { isArray } from "lodash-es";
 
 export class MySqlProcedures {
     constructor(private d: Database) { }

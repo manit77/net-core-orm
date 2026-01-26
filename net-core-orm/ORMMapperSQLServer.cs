@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Data;
 using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace CoreORM
 {
@@ -178,7 +179,7 @@ namespace CoreORM
             return t;
         }
 
-        public DBDatabase GetMapping(string dbName, string codeNameSpace, string connectionstring, List<DBORMMappings> mappingsList)
+        public async Task<DBDatabase> GetMapping(string dbName, string codeNameSpace, string connectionstring, List<DBORMMappings> mappingsList)
         {
             DBDatabase database = new DBDatabase();
             database.Name = dbName;
@@ -190,7 +191,7 @@ namespace CoreORM
 
             //var mappingsList = db.Query<DBORMMappings>("select * from ORMMappings order by TableName, ColumnName");
 
-            System.Data.DataSet ds = db.GetDataSet(this.SQLGetSchema, null, CommandType.Text);
+            System.Data.DataSet ds = await db.GetDataSet(this.SQLGetSchema, null, CommandType.Text);
 
             #region assign datatables
 

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Data;
 using System.Text.Json;
-
+using System.Threading.Tasks;
 
 namespace CoreORM
 {
@@ -77,14 +77,22 @@ namespace CoreORM
             return t;
         }
 
-        public DBDatabase GetMapping(string dbName, string codeNameSpace, string connectionstring, List<DBORMMappings> mappingsList)
+        public async Task<DBDatabase> GetMapping(string dbName, string codeNameSpace, string connectionstring, List<DBORMMappings> mappingsList)
         {
+            CoreUtils.ConsoleLogger.Info("Loading MySQL Database Schema for " + dbName);
+
             DBDatabase database = new DBDatabase();
             database.Name = dbName;
             database.CodeNameSpace = codeNameSpace;
 
             var db = new CoreUtils.MySQLDatabase(connectionstring);
-            var conn = db.GetConnection();
+            var conn2 = await db.GetConnection();
+            if (conn2.State == System.Data.ConnectionState.Open)
+            {
+                CoreUtils.ConsoleLogger.Warn("Database connection2 successful.");
+            }
+            
+
             database.DB = db;
 
             string sql = "";
@@ -95,7 +103,7 @@ SELECT *
 FROM information_schema.tables
 WHERE table_type = 'base table' AND table_schema = '{dbName}'; ";
 
-            System.Data.DataTable dtTables = db.GetDataTable(sql, null, CommandType.Text);
+            System.Data.DataTable dtTables = await db.GetDataTable(sql, null, CommandType.Text);
             dtTables.TableName = "TABLES";
 
             sql = $@"
@@ -103,7 +111,7 @@ SELECT *
 FROM information_schema.columns
 WHERE table_schema = '{dbName}'; ";
 
-            System.Data.DataTable dtColumns = db.GetDataTable(sql, null, CommandType.Text);
+            System.Data.DataTable dtColumns = await db.GetDataTable(sql, null, CommandType.Text);
             dtColumns.TableName = "COLUMNS";
 
             sql = $@"
@@ -111,7 +119,7 @@ SELECT *
 FROM information_schema.views
 WHERE table_schema = '{dbName}'; ";
 
-            System.Data.DataTable dtViews = db.GetDataTable(sql, null, CommandType.Text);
+            System.Data.DataTable dtViews = await db.GetDataTable(sql, null, CommandType.Text);
             dtViews.TableName = "VIEWS";
 
             sql = $@"
@@ -119,14 +127,14 @@ SELECT *
 FROM information_schema.routines
 WHERE routine_schema = '{dbName}'; ";
 
-            System.Data.DataTable dtProcedures = db.GetDataTable(sql, null, CommandType.Text);
+            System.Data.DataTable dtProcedures = await db.GetDataTable(sql, null, CommandType.Text);
             dtProcedures.TableName = "PROCEDURES";
 
             sql = $@"SELECT *   
 FROM information_schema.parameters
 where specific_schema='{dbName}';";
 
-            System.Data.DataTable dtParamaters = db.GetDataTable(sql, null, CommandType.Text);
+            System.Data.DataTable dtParamaters = await db.GetDataTable(sql, null, CommandType.Text);
             dtParamaters.TableName = "PARAMATERS";
 
             //System.Data.DataTable dtProceduresText = db.GetDataTable(sql, null, CommandType.Text);

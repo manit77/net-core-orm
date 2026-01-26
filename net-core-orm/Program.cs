@@ -1,32 +1,49 @@
 ﻿using System;
-using System.Data;
-using System.Diagnostics;
-using System.IO;
-using System.Reflection;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Hosting.Internal;
-using Microsoft.AspNetCore.Mvc.Razor;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.FileProviders;
-using Microsoft.Extensions.ObjectPool;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Diagnostics;
+using System.Reflection;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.FileProviders;
+using Microsoft.AspNetCore.Mvc.Razor;
 using CommandLine;
+using Microsoft.Extensions.Logging;
 
 namespace CoreORM
 {
     class Program
     {
+
+
         public class Options
         {
             [Option('c', "config name", Required = false, HelpText = "enter the config name defined in your config file")]
             public string ConfigName { get; set; }
         }
 
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
+
+            AppDomain.CurrentDomain.UnhandledException += (sender, e) =>
+            {
+                Console.WriteLine("UNHANDLED EXCEPTION:");
+                Console.WriteLine(e.ExceptionObject.ToString());
+            };
+
+
+            TaskScheduler.UnobservedTaskException += (sender, e) =>
+            {
+                Console.WriteLine("UNOBSERVED TASK EXCEPTION:");
+                Console.WriteLine(e.Exception.ToString());
+                e.SetObserved();
+            };
+
             List<ORMConfig> configs = [];
-        
+
             string configPath = Path.Combine(CoreUtils.IO.CurrentDirectory(), "config.json");
             if (File.Exists(configPath))
             {
@@ -34,13 +51,13 @@ namespace CoreORM
                 string json = CoreUtils.IO.ReadFile(configPath);
                 configs = Newtonsoft.Json.JsonConvert.DeserializeObject<List<ORMConfig>>(json);
 
-                CommandLine.Parser.Default.ParseArguments<Options>(args)
-                    .WithParsed((Options opts) =>
+                await Parser.Default.ParseArguments<Options>(args)
+                    .WithParsedAsync(async (Options opts) =>
                     {
                         var config = configs.Where(i => i.ConfigName == opts.ConfigName).FirstOrDefault();
                         if (config != null)
                         {
-                            GenFiles(config);
+                            await GenFiles(config);
                         }
                         else
                         {
@@ -60,23 +77,29 @@ namespace CoreORM
                                 config = configs.Where(i => i.ConfigName == configname).FirstOrDefault();
                                 if (config != null)
                                 {
-                                    GenFiles(config);
+                                    await GenFiles(config);
                                     break;
                                 }
                             }
                         }
 
                     })
-                    .WithNotParsed((IEnumerable<Error> errors) =>
+                    .ContinueWith(t =>
                     {
-                        Debug.WriteLine(errors);
+                        if (t.IsFaulted)
+                        {
+                            Console.WriteLine("ERROR:");
+                            Console.WriteLine(t.Exception.ToString());
+                        }
                     });
-            } else {
+            }
+            else
+            {
                 Console.WriteLine($"Config file does not exist: {configPath}");
             }
         }
 
-        static void GenFiles(ORMConfig config)
+        static async Task GenFiles(ORMConfig config)
         {
             IDBMapper mapper;
 
@@ -89,35 +112,45 @@ namespace CoreORM
                 mapper = new ORMMapperSQLServer();
             }
 
-            DBDatabase dbMap = mapper.GetMapping(config.DBName, config.NameSpace, config.ConnectionString, new List<DBORMMappings>());
+            DBDatabase dbMap = await mapper.GetMapping(config.DBName, config.NameSpace, config.ConnectionString, new List<DBORMMappings>());
 
-            string appDirectory = Directory.GetCurrentDirectory();
+            string appDirectory = AppContext.BaseDirectory;
             string dllName = Assembly.GetEntryAssembly().GetName().Name;
 
-            var services = new ServiceCollection();
+            CoreUtils.ConsoleLogger.Warn($"App Directory: {appDirectory}");
 
-            HostingEnvironment environment = new HostingEnvironment
-            {
-                WebRootFileProvider = new PhysicalFileProvider(appDirectory),
-                ApplicationName = dllName
-            };
+            //var services = new Microsoft.Extensions.DependencyInjection.ServiceCollection();
 
-            services.Configure<RazorViewEngineOptions>(options =>
+            var builder = WebApplication.CreateBuilder();
+
+            builder.Environment.ApplicationName = dllName;
+            builder.Environment.ContentRootPath = appDirectory;
+            builder.Environment.ContentRootFileProvider = new PhysicalFileProvider(appDirectory);
+
+            builder.Services.AddLogging(logging =>
             {
-                options.FileProviders.Clear();
-                options.FileProviders.Add(new PhysicalFileProvider(appDirectory));
+                logging.AddConsole();
+                logging.SetMinimumLevel(LogLevel.Debug);
             });
 
-            DiagnosticListener diagnosticSource = new DiagnosticListener("Microsoft.AspNetCore");
+            builder.Services.AddControllersWithViews()
+                .AddRazorRuntimeCompilation()
+                .AddRazorOptions(options =>
+                {
+                    options.ViewLocationFormats.Clear();
+                    options.ViewLocationFormats.Add("/Views/{1}/{0}.cshtml");
+                    options.ViewLocationFormats.Add("/Views/Shared/{0}.cshtml");
+                    options.ViewLocationFormats.Add("/Views/{0}.cshtml");
+                });
 
-            services.AddSingleton<IHostingEnvironment>(environment);
-            services.AddSingleton<ObjectPoolProvider, DefaultObjectPoolProvider>();
-            services.AddSingleton<DiagnosticSource>(diagnosticSource);
-            services.AddLogging();
-            services.AddMvc();
-            services.AddSingleton<RazorViewToStringRenderer>();
+            builder.Services.AddSingleton<RazorViewToStringRenderer>();
 
-            var provider = services.BuildServiceProvider();
+
+
+            builder.Services.AddSingleton<RazorViewToStringRenderer>();
+            //builder.Services.AddRazorRuntimeCompilation();
+
+            var provider = builder.Services.BuildServiceProvider();
 
             var renderer = provider.GetRequiredService<RazorViewToStringRenderer>();
 
@@ -127,9 +160,10 @@ namespace CoreORM
             Console.WriteLine($"DirOutDir={config.DirOutDir}");
             Console.WriteLine($"ViewsDirectory={config.ViewsDirectory}");
             Console.WriteLine($"ViewsCount={config.Views?.Count}");
+            Console.WriteLine("ContentRootPath = " + builder.Environment.ContentRootPath);
 
             CoreUtils.IO.DeleteFiles(config.DirOutDir);
-            
+
             if (config.Views != null)
             {
                 Console.WriteLine($"Executing using Views configs");
@@ -137,6 +171,28 @@ namespace CoreORM
                 //process views provided in the config file
                 foreach (var view in config.Views)
                 {
+
+                    var physicalViewPath = Path.Combine(AppContext.BaseDirectory, "Views", config.ViewsDirectory, view.ViewFileName);
+                    if (!File.Exists(physicalViewPath))
+                    {
+                        CoreUtils.ConsoleLogger.Warn($"Physical file NOT found: {physicalViewPath}");
+                        // list dir contents for debug:
+                        var dir = Path.Combine(AppContext.BaseDirectory, "Views", config.ViewsDirectory);
+                        if (Directory.Exists(dir))
+                        {
+                            CoreUtils.ConsoleLogger.Info("Files in dir: " + string.Join(", ", Directory.GetFiles(dir)));
+                        }
+                        else
+                        {
+                            CoreUtils.ConsoleLogger.Warn("Views subdir missing entirely.");
+                        }
+                        throw new FileNotFoundException("View file missing on disk", physicalViewPath);
+                    }
+                    else
+                    {
+                        CoreUtils.ConsoleLogger.Info($"Physical file found: {physicalViewPath}");
+                    }
+
                     string outfilepath = view.ViewOutputFilePath;
                     string razorPath = "/Views/" + config.ViewsDirectory + "/" + view.ViewFileName;
                     dbMap.param0 = "";

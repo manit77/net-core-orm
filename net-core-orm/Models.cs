@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Data;
+using System.Threading.Tasks;
 
 namespace CoreORM
 {
@@ -45,7 +46,7 @@ namespace CoreORM
 
     public interface IDBMapper
     {
-        DBDatabase GetMapping(string dbName, string codeNameSpace, string connectionstring, List<DBORMMappings> mappingsList);
+        Task<DBDatabase> GetMapping(string dbName, string codeNameSpace, string connectionstring, List<DBORMMappings> mappingsList);
     }
 
     public class DBDatabase

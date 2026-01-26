@@ -4,10 +4,10 @@
 @model DBDatabase
 @{
     //get enums list
-    var dtGroups = Model.DB.GetDataTable("SELECT distinct DataGroup FROM EnumsList ORDER BY DataGroup");
-    System.Data.DataTable dtEnumsList = Model.DB.GetDataTable("SELECT Id, DataGroup, DataText, DataDescription, DisplayText, Sequence FROM EnumsList ORDER BY DataGroup, DataText");
+    var dtGroups = await Model.DB.GetDataTable("SELECT distinct DataGroup FROM EnumsList ORDER BY DataGroup");
+    System.Data.DataTable dtEnumsList = await Model.DB.GetDataTable("SELECT Id, DataGroup, DataText, DataDescription, DisplayText, Sequence FROM EnumsList ORDER BY DataGroup, DataText");
 
-    System.Data.DataTable dtAuthRoles = Model.DB.GetDataTable("SELECT * FROM AuthRoles");
+    System.Data.DataTable dtAuthRoles = await Model.DB.GetDataTable("SELECT * FROM AuthRoles");
 
     bool ServerSideCode = true;
 

@@ -268,6 +268,4 @@ project.lock.json
 #####
 # End of core ignore list, below put you custom 'per project' settings (patterns or path)
 #####
-/SIM.ORM/Views/TypeScriptNodeHelper_Model.cshtml
-/SIM.ORM/Views/AngularHelper_DataItem.cshtml
-/SIM.ORM/Views/AngularHelper_Forms.cshtml
+config.json

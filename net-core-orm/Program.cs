@@ -17,8 +17,6 @@ namespace CoreORM
 {
     class Program
     {
-
-
         public class Options
         {
             [Option('c', "config name", Required = false, HelpText = "enter the config name defined in your config file")]
@@ -119,8 +117,6 @@ namespace CoreORM
 
             CoreUtils.ConsoleLogger.Warn($"App Directory: {appDirectory}");
 
-            //var services = new Microsoft.Extensions.DependencyInjection.ServiceCollection();
-
             var builder = WebApplication.CreateBuilder();
 
             builder.Environment.ApplicationName = dllName;
@@ -145,16 +141,10 @@ namespace CoreORM
 
             builder.Services.AddSingleton<RazorViewToStringRenderer>();
 
-
-
-            builder.Services.AddSingleton<RazorViewToStringRenderer>();
-            //builder.Services.AddRazorRuntimeCompilation();
-
             var provider = builder.Services.BuildServiceProvider();
-
             var renderer = provider.GetRequiredService<RazorViewToStringRenderer>();
-
             string txt = string.Empty;
+            
             DateTime startTime = DateTime.Now;
             Console.WriteLine("BEGIN Code Generation " + startTime);
             Console.WriteLine($"DirOutDir={config.DirOutDir}");

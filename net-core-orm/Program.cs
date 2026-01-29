@@ -105,6 +105,10 @@ namespace CoreORM
             {
                 mapper = new ORMMapperMySQL();
             }
+            else if (config.DatabaseType == "pgsql")
+            {
+                mapper = new ORMMapperPostgreSQL();
+            }
             else
             {
                 mapper = new ORMMapperSQLServer();
@@ -152,7 +156,23 @@ namespace CoreORM
             Console.WriteLine($"ViewsCount={config.Views?.Count}");
             Console.WriteLine("ContentRootPath = " + builder.Environment.ContentRootPath);
 
-            CoreUtils.IO.DeleteFiles(config.DirOutDir);
+            CoreUtils.IO.DeleteFolder(config.DirOutDir);
+
+            if (config.PreProcess != null)
+            {
+                foreach (var preProcess in config.PreProcess)
+                {
+                    try
+                    {
+                        ExecProcess(preProcess);
+                    }
+                    catch (Exception ex)
+                    {
+                        Console.WriteLine("ERROR executing pre process:" + ex.ToString());
+                    }
+                }
+            }
+            
 
             if (config.Views != null)
             {
@@ -161,7 +181,6 @@ namespace CoreORM
                 //process views provided in the config file
                 foreach (var view in config.Views)
                 {
-
                     var physicalViewPath = Path.Combine(AppContext.BaseDirectory, "Views", config.ViewsDirectory, view.ViewFileName);
                     if (!File.Exists(physicalViewPath))
                     {
@@ -202,7 +221,7 @@ namespace CoreORM
                         {
                             try
                             {
-                                ExecPostProcess(postProcess);
+                                ExecProcess(postProcess);
                             }
                             catch (Exception ex)
                             {
@@ -237,14 +256,15 @@ namespace CoreORM
                     Console.WriteLine($"Generated {outfilepath}");
                 }
             }
-
+            
+            
             if (config.PostProcess != null)
             {
                 foreach (var postProcess in config.PostProcess)
                 {
                     try
                     {
-                        ExecPostProcess(postProcess);
+                        ExecProcess(postProcess);
                     }
                     catch (Exception ex)
                     {
@@ -256,21 +276,21 @@ namespace CoreORM
             Console.WriteLine($"Code Generation Done. {(DateTime.Now - startTime).TotalSeconds} secs");
         }
 
-        static void ExecPostProcess(ORMPostProcess postProcess)
+        static void ExecProcess(ORMProcess process)
         {
-            if (!string.IsNullOrEmpty(postProcess.PostProcessExec))
+            if (!string.IsNullOrEmpty(process.ProcessExec))
             {
-                ProcessStartInfo startInfo = new ProcessStartInfo(postProcess.PostProcessExec, postProcess.PostProcessArgs);
-                startInfo.WorkingDirectory = postProcess.PostProcessWorkingDir;
+                ProcessStartInfo startInfo = new ProcessStartInfo(process.ProcessExec, process.ProcessArgs);
+                startInfo.WorkingDirectory = process.ProcessWorkingDir;
                 startInfo.UseShellExecute = false;
                 startInfo.RedirectStandardOutput = true;
                 startInfo.RedirectStandardError = true;
 
-                using (Process process = Process.Start(startInfo))
+                using (Process osProcess = Process.Start(startInfo))
                 {
-                    Console.WriteLine($"Post Process starting: {postProcess.PostProcessExec} {postProcess.PostProcessArgs}");
+                    Console.WriteLine($"Process starting: {process.ProcessExec} {process.ProcessArgs}");
 
-                    process.OutputDataReceived += new DataReceivedEventHandler((object sender, DataReceivedEventArgs e) =>
+                    osProcess.OutputDataReceived += new DataReceivedEventHandler((object sender, DataReceivedEventArgs e) =>
                     {
                         if (!string.IsNullOrEmpty(e.Data))
                         {
@@ -278,7 +298,7 @@ namespace CoreORM
                         }
                     });
 
-                    process.ErrorDataReceived += new DataReceivedEventHandler((object sender, DataReceivedEventArgs e) =>
+                    osProcess.ErrorDataReceived += new DataReceivedEventHandler((object sender, DataReceivedEventArgs e) =>
                     {
                         if (!string.IsNullOrEmpty(e.Data))
                         {
@@ -286,11 +306,11 @@ namespace CoreORM
                         }
                     });
 
-                    process.BeginOutputReadLine();
-                    process.BeginErrorReadLine();
-                    process.WaitForExit();
+                    osProcess.BeginOutputReadLine();
+                    osProcess.BeginErrorReadLine();
+                    osProcess.WaitForExit();
 
-                    Console.WriteLine("Post Process completed with exit code: " + process.ExitCode);
+                    Console.WriteLine("Post Process completed with exit code: " + osProcess.ExitCode);
                 }
             }
         }

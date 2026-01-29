@@ -12,11 +12,11 @@ namespace CoreORM
         public string FindRegEx { get; set; }
         public string Replace { get; set; }
     }
-    public class ORMPostProcess
+    public class ORMProcess
     {
-        public string PostProcessExec { get; set; }
-        public string PostProcessArgs { get; set; }
-        public string PostProcessWorkingDir { get; set; }
+        public string ProcessExec { get; set; }
+        public string ProcessArgs { get; set; }
+        public string ProcessWorkingDir { get; set; }
     }
     public class ORMConfig
     {
@@ -31,7 +31,8 @@ namespace CoreORM
         public string NameSpace { get; set; }
         public string ViewsDirectory { get; set; }
         public List<ORMConfigFindReplace> RegExReplace { get; set; }
-        public List<ORMPostProcess> PostProcess { get; set; }
+        public List<ORMProcess> PostProcess { get; set; }
+        public List<ORMProcess> PreProcess { get; set; }
         public List<ORMView> Views { get; set; }
 
     }
@@ -41,7 +42,7 @@ namespace CoreORM
         public string ViewFileName { get; set; }
         public string ViewOutputFilePath { get; set; }
         public string ViewParams { get; set; }
-        public List<ORMPostProcess> ViewPostProcess { get; set; }
+        public List<ORMProcess> ViewPostProcess { get; set; }
     }
 
     public interface IDBMapper
@@ -51,7 +52,7 @@ namespace CoreORM
 
     public class DBDatabase
     {
-        public string Name = string.Empty;
+        public string Name = string.Empty;       
         public string CodeNameSpace = string.Empty;
         public List<DBTable> Tables = new List<DBTable>();
         public List<DBTable> Views = new List<DBTable>();
@@ -63,6 +64,7 @@ namespace CoreORM
     public class DBTable
     {
         public string Name = string.Empty;
+        public string MappedName = string.Empty;
         public DBColumn Id { get; set; }
         public List<DBColumn> Columns = new List<DBColumn>();
         public List<DBColumn> PrimaryKeys = new List<DBColumn>();
@@ -132,6 +134,7 @@ namespace CoreORM
     public class DBColumn
     {
         public string Name = string.Empty;
+        public string MappedName = string.Empty;
         public string DBType = string.Empty;
         public DBTypeMap MappedDataType = null;
         public bool IsNullable = false;

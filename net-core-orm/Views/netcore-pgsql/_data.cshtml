@@ -1,0 +1,67 @@
+@using CoreORM
+@using CoreUtils
+@model DBDatabase
+
+@foreach (var table in Model.Tables)
+{
+    string mappedTableName = table.MappedName;
+@:@(Html.Raw("<"))file name="Data/@(mappedTableName)/@(mappedTableName)Data.cs">
+@:using ORM;
+
+@:public class @(mappedTableName)Data : IData@(Html.Raw("<"))@(mappedTableName)>
+@:{
+@:    public static readonly IReadOnlyDictionary@(Html.Raw("<"))string, IValidator[]> InsertValidators = new Dictionary@(Html.Raw("<"))string, IValidator[]>
+@:    {
+@:        { @(mappedTableName)Props.Id, new IValidator[] { Validators.MustExist(), Validators.MustMatch(0L) } }
+@:    };
+
+@:    public static readonly IReadOnlyDictionary@(Html.Raw("<"))string, IValidator[]> UpdateValidators = new Dictionary@(Html.Raw("<"))string, IValidator[]>
+@:    {
+@:        { @(mappedTableName)Props.Id, new IValidator[] { Validators.MustExist(), Validators.GreaterThanZero() } },
+@:    };
+
+@:    private readonly DataDeps deps;
+@:    public @(mappedTableName)Data(DataDeps deps)
+@:    {
+@:        this.deps = deps;
+@:    }
+
+@:    public async Task@(Html.Raw("<"))DBResult> Delete(AuthTokenObject auth, long id)
+@:    {
+@:        using var @(mappedTableName.ToLower())Coll = new @(mappedTableName)Collections(deps.NewConnection());
+@:        return await @(mappedTableName.ToLower())Coll.Delete(new @(mappedTableName)PKeys() { Id = id }, new DBSaveConfig() { UserId = auth.Id });
+@:    }
+
+@:    public async Task@(Html.Raw("<"))DBResult> Fill(@(mappedTableName) model, long id)
+@:    {
+@:        using var @(mappedTableName.ToLower())Coll = new @(mappedTableName)Collections(deps.NewConnection());
+@:        return await @(mappedTableName.ToLower())Coll.Fill(model, new @(mappedTableName)PKeys() { Id = id });
+@:    }
+
+@:    public async Task@(Html.Raw("<"))@(mappedTableName)?> Get(long id)
+@:    {
+@:        var model = New();
+@:        var result = await this.Fill(model, id);
+@:        return result.Valid ? model : null;
+@:    }
+
+@:    public @(mappedTableName) New()
+@:    {
+@:        return new @(mappedTableName)();
+@:    }
+
+@:    public async Task@(Html.Raw("<"))DBResult> Save(AuthTokenObject auth, @(mappedTableName) model)
+@:    {
+@:        using var @(mappedTableName.ToLower())Coll = new @(mappedTableName)Collections(deps.NewConnection());
+@:        return await @(mappedTableName.ToLower())Coll.Save(model, new DBSaveConfig() { UserId = auth.Id });
+@:    }
+@:}
+@:@(Html.Raw("<"))/file>
+
+@:@(Html.Raw("<"))file name="Data/@(mappedTableName)/@(mappedTableName)Models.cs">
+@:public class @(mappedTableName) : @(mappedTableName)Model
+@:{   
+@:}
+@:@(Html.Raw("<"))/file>
+}
+

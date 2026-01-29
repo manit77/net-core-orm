@@ -1,0 +1,107 @@
+@using CoreORM
+@using CoreUtils
+@model DBDatabase
+
+@foreach (var table in Model.Tables)
+{
+    string mappedTableName = table.MappedName;
+    string tableName = table.Name;;
+
+@:@(Html.Raw("<"))file name="@(mappedTableName)/@(mappedTableName)Schema.cs">
+@://Code generated using net-core-orm on @(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"))
+@:using System;
+@:using System.Data.Common;
+@:using System.Reflection.Emit;
+@:using System.Linq;
+@:using System.Reflection;
+@:using Microsoft.VisualBasic;
+@:using System.Dynamic;
+@:using CoreUtils;
+@:using ORM;
+
+//Props
+@:public static class @(mappedTableName)Props {
+foreach (var col in table.Columns) {
+    @:public const string @(col.MappedName) = "@(col.MappedName)";
+}
+@:} //end Props @(mappedTableName)
+
+//Fields
+@:public class @(mappedTableName)Fields {
+foreach (var col in table.Columns) {
+    @:  public readonly string @(col.MappedName) = "@(col.Name)";
+} //end for, Columns
+@:} //end Fields @(mappedTableName)
+
+//primary key Fields
+@:public sealed class @(mappedTableName)PKeys {
+    foreach (var col in table.PrimaryKeys) {
+    @:  public @(col.MappedDataType.CodeType) @(col.MappedName) { get; set; }
+    } //end for, Columns
+@:} //end PKeys @(mappedTableName)
+
+//object reference 
+@:public class @(mappedTableName)ObjectRef  {
+    foreach (var col in table.Columns) {
+    @:  public @(col.MappedDataType.CodeType)@(col.IsNullable ? "?" : "") @(col.MappedName) { get; set; } =  @(col.IsNullable ? "null" : col.MappedDataType.CodeTypeDefaultValue);
+    } //end for, Columns
+@:} //end ObjectRef @(mappedTableName)
+
+
+// schema
+@:public class @(mappedTableName)Schema: IORMSchema {
+@:  public string TableName => "@(tableName)";
+@:  private static readonly IReadOnlyList@(Html.Raw("<"))ORMField> _ormFields =
+@:    [
+foreach (var col in table.Columns)
+{
+@:      new("@(col.MappedName)", "@(col.Name)", typeof(@(col.MappedDataType.CodeType)@(col.IsNullable ? "?" : "")), isPrimaryKey: @(col.IsPrimaryKey.ToString().ToLower()), isAuto: @(col.IsIdentity.ToString().ToLower())),
+}
+@:  ];
+@:  private static readonly ORMField? _autoField = _ormFields.FirstOrDefault(f => f.IsAuto);
+@:  private static readonly IReadOnlyList@(Html.Raw("<"))ORMField> _pkFields = _ormFields.Where(f => f.IsPrimaryKey).ToList();
+@:  private static readonly @(mappedTableName)Fields _fieldsMap = new @(mappedTableName)Fields();
+
+@:  public IReadOnlyList@(Html.Raw("<"))ORMField> ORMFields => _ormFields;
+@:  public IReadOnlyList@(Html.Raw("<"))ORMField> PrimaryKeys => _pkFields;
+@:  public ORMField? AutoField => _autoField;
+@:  public @(mappedTableName)Fields Fields => _fieldsMap;
+@:  public object ObjectRef => new @(mappedTableName)ObjectRef();
+
+@:  public object NewObjectRef()
+@:  {
+@:      return new @(mappedTableName)ObjectRef();
+@:  }
+@:} //end schema @(mappedTableName)
+
+//model
+@:public class @(mappedTableName)Model : ORMObject
+@:{
+foreach (var col in table.Columns)
+{
+    @:    public @(col.MappedDataType.CodeType)? @(col.MappedName)
+    @:    {
+    @:        get => Get@(Html.Raw("<"))@(col.MappedDataType.CodeType)?>(nameof(@(col.MappedName)));
+    @:        set => Set(nameof(@(col.MappedName)), value);
+    @:    }
+}
+@:    public void Defaults()
+@:    {
+@:        foreach (var field in Schemas.SubjectsSchema.ORMFields)
+@:        {
+@:            this.Values[field.PropertyName] = field.DefaultValue;
+@:        }
+@:    }
+@:} //end model @(mappedTableName)
+
+//collections
+@:public class @(mappedTableName)Collections :  ORMCollectionsBase<@(mappedTableName)Model, @(mappedTableName)PKeys>
+@:{
+@:    private static readonly @(mappedTableName)Schema schema = Schemas.@(mappedTableName)Schema;
+@:    public @(mappedTableName)Collections(DbConnection connection) : base(connection, schema)
+@:    {
+@:    }
+@:}
+
+@:@(Html.Raw("<"))/file>
+}

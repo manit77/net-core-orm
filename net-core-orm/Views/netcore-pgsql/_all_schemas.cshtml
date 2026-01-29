@@ -1,0 +1,12 @@
+@using CoreORM
+@using CoreUtils
+@model DBDatabase
+
+public static class Schemas
+{
+@foreach (var table in Model.Tables)
+{
+    string tablename = table.MappedName;
+@:    public static @(tablename)Schema @(tablename)Schema { get; } = new @(tablename)Schema();
+}
+}

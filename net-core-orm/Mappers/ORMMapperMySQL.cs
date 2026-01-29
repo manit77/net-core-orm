@@ -7,10 +7,8 @@ using System.Threading.Tasks;
 
 namespace CoreORM
 {
-
     public class ORMMapperMySQL : IDBMapper
     {
-
         public DBTypeMappings DataTypeMaps = new DBTypeMappings();
         public ORMMapperMySQL()
         {
@@ -192,11 +190,11 @@ AND information_schema.TABLE_CONSTRAINTS.TABLE_SCHEMA = '{dbName}';";
                     col.DBType = CoreUtils.Data.ParseIt<string>(rowCol["data_type"]);
                     col.MappedDataType = GetDBTypeMap_ByDataBaseType(col.DBType);
                     col.MaxLength = CoreUtils.Data.ParseIt<long>(rowCol["CHARACTER_MAXIMUM_LENGTH"]);
-                    col.IsNullable = (CoreUtils.Data.ParseIt<string>(rowCol["IS_NULLABLE"]) == "YES") ? true : false;
+                    col.IsNullable = (CoreUtils.Data.ParseIt<string>(rowCol["IS_NULLABLE"]) == "YES");
                     col.DefaultValue = CoreUtils.Data.ParseIt<string>(rowCol["COLUMN_DEFAULT"]);
                     col.Precision = CoreUtils.Data.ParseIt<int>(rowCol["NUMERIC_PRECISION"]);
-                    col.IsPrimaryKey = (CoreUtils.Data.ParseIt<string>(rowCol["COLUMN_KEY"]) == "PRI") ? true : false;
-                    col.IsIdentity = (CoreUtils.Data.ParseIt<string>(rowCol["EXTRA"]) == "auto_increment") ? true : false;
+                    col.IsPrimaryKey = (CoreUtils.Data.ParseIt<string>(rowCol["COLUMN_KEY"]) == "PRI");
+                    col.IsIdentity = (CoreUtils.Data.ParseIt<string>(rowCol["EXTRA"]) == "auto_increment");
                     col.Ordinal = ordcounter;
 
                     if (col.Name.ToLower() == "id")
@@ -285,296 +283,7 @@ AND information_schema.TABLE_CONSTRAINTS.TABLE_SCHEMA = '{dbName}';";
 
                 database.Tables.Add(table);
             }
-
-
-            ////map foreign keys
-            //foreach (System.Data.DataRow row in dtForeignKeys.Rows) {
-            //    string foreign_key_name = (string)row["foreign_key_name"];
-            //    string table_name = (string)row["table_name"];
-            //    string column_name = (string)row["column_name"];
-            //    string foreign_table_name = (string)row["foreign_table_name"];
-            //    string foreign_column_name = (string)row["foreign_column_name"];
-
-            //    //find the table
-            //    var table = database.Tables.Where(i => i.Name == table_name).FirstOrDefault();
-            //    if (table != null) {
-            //        var column = table.Columns.Where(i => i.Name == column_name).FirstOrDefault();
-            //        if (column != null) {
-            //            //find the foreign table
-            //            var ftable = database.Tables.Where(i => i.Name == foreign_table_name).FirstOrDefault();
-            //            if (ftable != null) {
-            //                var fcolumn = ftable.Columns.Where(i => i.Name == foreign_column_name).FirstOrDefault();
-            //                if (fcolumn != null) {
-
-            //                    //add foreign key to table
-            //                    var fk = new DBForeignKey() {
-            //                        Table = table,
-            //                        Column = column,
-            //                        ForeignColumn = fcolumn,
-            //                        Name = foreign_key_name,
-            //                        ForeignTable = ftable
-            //                    };
-
-            //                    table.Foreign_Keys.Add(fk);
-
-            //                    if (fk.ForeignTable.Name == "EnumsList") {
-            //                        fk.Column.Mapping = new DBORMColumnMap() {
-            //                            DisplayName = ORMCoreUtils.ColumnNameToLabel(fk.Column.Name),
-            //                            Query = "SELECT Value=Id, Text=DataText FROM EnumsList where DataGroup='" + fk.Column.Name + "' order by DataText",
-            //                            InputType = "select",
-            //                            Required = false,
-            //                            Visible = true,
-            //                        };
-            //                    } else {
-            //                        //if set the default query for the mapping is there is one
-            //                        if (fk.Column.Mapping == null && fk.ForeignTable.Mapping != null) {
-            //                            fk.Column.Mapping = new DBORMColumnMap() {
-            //                                DisplayName = ORMCoreUtils.ColumnNameToLabel(fk.Column.Name),
-            //                                Query = fk.ForeignTable.Mapping.QueryForeignKey,
-            //                                InputType = "select",
-            //                                Required = false,
-            //                                Visible = true,
-            //                            };
-            //                        }
-            //                    }
-
-            //                }
-            //            }
-            //        }
-            //    }
-            //}
-
-            //discovery one to many mappings, Rules:
-            //TableName + And + TableName
-            //2 foreign keys, belongs to first TableName
-            foreach (var linkerTable in database.Tables)
-            {
-                if (linkerTable.Name.Contains("And"))
-                {
-                    if (linkerTable.Foreign_Keys.Count == 2)
-                    {
-                        string[] tableNames = linkerTable.Name.Split("And");
-                        string oneTableName = tableNames[0];
-                        string manyTableName = tableNames[1];
-
-                        var oneTable = database.Tables.Where(i => i.Name == oneTableName).FirstOrDefault();
-                        var manyTable = database.Tables.Where(i => i.Name == manyTableName).FirstOrDefault();
-
-                        if (oneTable != null && manyTable != null && oneTable != manyTable)
-                        {
-                            if (oneTable.PrimaryKeys.Count == 1 && manyTable.PrimaryKeys.Count == 1)
-                            {
-
-                                var linkerMap = (from i in mappingsList
-                                                 where i.TableName == linkerTable.Name
-                                                 && i.MapType == "OneToMany"
-                                                 select i).FirstOrDefault();
-
-                                if (linkerMap != null && linkerMap.FormMeta.Length > 0)
-                                {
-                                    try
-                                    {
-                                        linkerTable.OneToManyMapping = JsonSerializer.Deserialize<DBORMColumnMap>(linkerMap.FormMeta);
-                                    }
-                                    catch (Exception exp)
-                                    {
-                                        Console.WriteLine(exp.ToString());
-                                        throw new Exception("Unable to parse ForeignKey mapping for " + linkerTable.Name);
-                                    }
-                                }
-
-                                //add to one to many list
-                                oneTable.OneToManyList.Add(new DBOneToMany()
-                                {
-                                    LinkerTable = linkerTable,
-                                    OneTable = oneTable,
-                                    ManyTable = manyTable
-                                });
-                            }
-                        }
-                    }
-                }
-            }
-
-            //discover ManyForOne
-            //Rules: TableName + For + TableName
-            foreach (var table in database.Tables)
-            {
-                if (table.Name.Contains("For"))
-                {
-
-                    var manyTable = table;
-                    string[] tableNames = table.Name.Split("For");
-
-                    string oneTableName = tableNames[1];
-                    var oneTable = database.Tables.Where(i => i.Name == oneTableName).FirstOrDefault();
-                    if (oneTable != null)
-                    {
-                        DBForeignKey oneFK = null;
-                        DBForeignKey manyFK = null;
-
-                        if (oneTable.Foreign_Keys != null)
-                        {
-                            foreach (var fk in oneTable.Foreign_Keys)
-                            {
-                                if (fk.ForeignTable == manyTable)
-                                {
-                                    oneFK = fk;
-                                }
-                            }
-                        }
-
-                        if (manyTable.Foreign_Keys != null)
-                        {
-                            foreach (var fk in manyTable.Foreign_Keys)
-                            {
-                                if (fk.ForeignTable == oneTable)
-                                {
-                                    manyFK = fk;
-                                }
-                            }
-                        }
-
-                        if (oneTable != null && manyTable != null && oneTable != manyTable)
-                        {
-                            if (oneTable.PrimaryKeys.Count == 1 && manyTable.PrimaryKeys.Count == 1)
-                            {
-
-                                var manyMap = (from i in mappingsList
-                                               where i.TableName == manyTable.Name
-                                               && i.MapType == "ManyForOne"
-                                               select i).FirstOrDefault();
-
-                                if (manyMap != null && manyMap.FormMeta.Length > 0)
-                                {
-                                    try
-                                    {
-                                        manyTable.ManyForOneMapping = JsonSerializer.Deserialize<DBORMColumnMap>(manyMap.FormMeta);
-                                    }
-                                    catch
-                                    {
-                                        throw new Exception("Unable to parse ForeignKey mapping for " + manyTable.Name);
-                                    }
-                                }
-
-                                //add to one to many list
-                                oneTable.ManyForOneList.Add(new DBManyForOne()
-                                {
-                                    OneTable = oneTable,
-                                    ManyTable = manyTable,
-                                    OneFK = oneFK,
-                                    ManyFK = manyFK
-                                });
-                            }
-                        }
-                    }
-                }
-            }
-
-            //generate sql for (ManyForOne)
-            foreach (var table in database.Tables)
-            {
-                if (table.ManyForOneList != null)
-                {
-                    foreach (var one in table.ManyForOneList)
-                    {
-                        //string sql = $"select * from BuildsForStoreAssets where StoreAssetId={dbmodel.Id}";
-                        if (one.ManyFK == null)
-                        {
-                            continue;
-                        }
-                        string valueField = "Id";
-                        string textField = "Id";
-                        var nameCol = one.ManyTable.GetColumn("Name");
-
-                        if (nameCol != null)
-                        {
-                            textField = nameCol.Name;
-                        }
-                        else
-                        {
-                            var descCol = one.ManyTable.GetColumn("Description");
-                            if (descCol != null)
-                            {
-                                textField = descCol.Name;
-                            }
-                        }
-
-                        one.SQL_Many = $"select Value={valueField}, Text={textField} from " + one.ManyTable.Name + " where " + one.ManyFK.Column.Name + " = {dbmodel.Id} order by " + $"{textField}";
-
-                        //if a column mapping does not exists create a default one
-                        if (one.OneFK != null && one.OneFK.Column.Mapping == null)
-                        {
-                            one.OneFK.Column.Mapping = new DBORMColumnMap()
-                            {
-                                Visible = true,
-                                Required = false,
-                                InputType = "select"
-                            };
-                        }
-                    }
-                }
-            }
-
-            //generate sql for LinkerTable (OneToMany)
-            foreach (var table in database.Tables)
-            {
-                foreach (var oneToMany in table.OneToManyList)
-                {
-                    string paramsList = "";
-                    DBForeignKey fkOneColumn = null;
-                    DBForeignKey fkManyColumn = null;
-                    //there are only two forieng keys
-                    foreach (var fk in oneToMany.LinkerTable.Foreign_Keys)
-                    {
-                        if (oneToMany.OneTable.Name == fk.ForeignTable.Name)
-                        {
-                            fkOneColumn = fk;
-                            //get the column name of the oneToMany.Table
-                            if (paramsList.Length > 0)
-                            {
-                                paramsList = paramsList + ",";
-                            }
-                            paramsList = fk.Column.MappedDataType.CodeType + " " + fk.Column.Name;
-                        }
-                        else
-                        {
-                            fkManyColumn = fk;
-                        }
-                    }
-
-                    oneToMany.SQL_Many = @"
-SELECT {ManyTable.Name}.*
-from {ManyTable.Name} {ManyTable.Name}
-join {LinkerTable.Name} {LinkerTable.Name}
-    on {LinkerTable.Name}.{ManyColumn.Name} = {ManyTable.Name}.{ManyTable.PrimaryKey.Name}
-where {LinkerTable.Name}.{OneColumn.Name}= @{OneColumn.Name}";
-
-                    oneToMany.SQL_Linker = @"
-SELECT {LinkerTable.Name}.*
-from {ManyTable.Name} {ManyTable.Name}
-join {LinkerTable.Name} {LinkerTable.Name}
-    on {LinkerTable.Name}.{ManyColumn.Name} = {ManyTable.Name}.{ManyTable.PrimaryKey.Name}
-where {LinkerTable.Name}.{OneColumn.Name}= @{OneColumn.Name}";
-
-                    //set the sql statement
-                    oneToMany.SQL_Many = oneToMany.SQL_Many.Replace("{ManyTable.Name}", oneToMany.ManyTable.Name);
-                    oneToMany.SQL_Many = oneToMany.SQL_Many.Replace("{LinkerTable.Name}", oneToMany.LinkerTable.Name);
-                    oneToMany.SQL_Many = oneToMany.SQL_Many.Replace("{ManyColumn.Name}", fkManyColumn.Column.Name);
-                    oneToMany.SQL_Many = oneToMany.SQL_Many.Replace("{OneColumn.Name}", fkOneColumn.Column.Name);
-                    oneToMany.SQL_Many = oneToMany.SQL_Many.Replace("{OneTable.Name}", oneToMany.OneTable.Name);
-                    oneToMany.SQL_Many = oneToMany.SQL_Many.Replace("{ManyTable.PrimaryKey.Name}", oneToMany.ManyTable.PrimaryKeys[0].Name);
-
-                    oneToMany.SQL_Linker = oneToMany.SQL_Linker.Replace("{ManyTable.Name}", oneToMany.ManyTable.Name);
-                    oneToMany.SQL_Linker = oneToMany.SQL_Linker.Replace("{LinkerTable.Name}", oneToMany.LinkerTable.Name);
-                    oneToMany.SQL_Linker = oneToMany.SQL_Linker.Replace("{ManyColumn.Name}", fkManyColumn.Column.Name);
-                    oneToMany.SQL_Linker = oneToMany.SQL_Linker.Replace("{OneColumn.Name}", fkOneColumn.Column.Name);
-                    oneToMany.SQL_Linker = oneToMany.SQL_Linker.Replace("{OneTable.Name}", oneToMany.OneTable.Name);
-                    oneToMany.SQL_Linker = oneToMany.SQL_Linker.Replace("{ManyTable.PrimaryKey.Name}", oneToMany.ManyTable.PrimaryKeys[0].Name);
-
-                }
-            }
-
+            
             //load views
             foreach (System.Data.DataRow row in dtViews.Rows)
             {
@@ -649,13 +358,7 @@ where {LinkerTable.Name}.{OneColumn.Name}= @{OneColumn.Name}";
                     database.Procedures.Add(proc);
                 }
             }
-
-            //skip this for mysql
-            //this gets the stored procedure text and parses the paramaters
-            //foreach (DBProcedure proc in database.Procedures) {
-            //    ProcessParam(proc);
-            //}
-
+          
             //generate SQL Statements for each table
             foreach (DBTable table in database.Tables)
             {
@@ -762,7 +465,7 @@ where {LinkerTable.Name}.{OneColumn.Name}= @{OneColumn.Name}";
 
             string definition = proc.Text.ToLower();
             definition = definition.Replace("\t", " ").Replace("\r", " ").Replace("\n", " ");
-            definition = CoreUtils.Data.ReplaceAllInstances(definition, "  ", " "); //remove all double spaces
+            definition = CoreUtils.Data.ReplaceAll(definition, "  ", " "); //remove all double spaces
 
             int poscreate = definition.IndexOf("("); //find first @
             int posAs = 0;

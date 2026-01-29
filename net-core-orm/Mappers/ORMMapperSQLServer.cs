@@ -813,7 +813,7 @@ where {LinkerTable.Name}.{OneColumn.Name}= @{OneColumn.Name}";
 
             string definition = proc.Text.ToLower();
             definition = definition.Replace("\t", " ").Replace("\r", " ").Replace("\n", " ");
-            definition = CoreUtils.Data.ReplaceAllInstances(definition, "  ", " "); //remove all double spaces
+            definition = CoreUtils.Data.ReplaceAll(definition, "  ", " "); //remove all double spaces
 
             int poscreate = definition.IndexOf("("); //find first @
             int posAs = 0;

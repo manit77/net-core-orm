@@ -42,6 +42,7 @@ namespace CoreORM
         public string ViewFileName { get; set; }
         public string ViewOutputFilePath { get; set; }
         public string ViewParams { get; set; }
+        public string ViewNameSpace { get; set; }
         public List<ORMProcess> ViewPostProcess { get; set; }
     }
 

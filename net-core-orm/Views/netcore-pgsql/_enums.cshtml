@@ -1,0 +1,118 @@
+@using CoreORM
+@using System.Linq
+@using System.Data
+@model DBDatabase
+@{
+    //get enums list
+    var dtGroups = await Model.DB.GetDataTable("SELECT distinct data_group FROM public.enums_list ORDER BY data_group");
+    System.Data.DataTable dtEnumsList = await Model.DB.GetDataTable("SELECT id, data_group, data_text, data_description, display_text, sequence FROM public.enums_list ORDER BY data_group, data_text");
+
+    System.Data.DataTable dtAuthRoles = await Model.DB.GetDataTable("SELECT * FROM public.auth_roles");
+
+    bool ServerSideCode = true;
+
+}
+//Do not modify. v1.0
+//Code generated using net-core-orm
+namespace JMS.Data.Enums;
+
+@{
+    if(Model.param0 != null)
+    {
+        if (Model.param0 is string && (string)Model.param0 == "clientside")
+        {
+            ServerSideCode = false;
+        }
+    }
+
+    if (ServerSideCode)
+    {
+@:public class EnumDataItem {
+@:
+@:  public string DataDescription = "";
+@:  public string DataGroup = "";
+@:  public string DataText = "";
+@:  public string DisplayText = "";
+@:  public int Id = 0;
+@:
+@:  public EnumDataItem(string desc, string dgrp, string dtxt, string disptxt, int id) {
+@:      this.DataDescription = desc;
+@:      this.DataGroup = dgrp;
+@:      this.DataText = dtxt;
+@:      this.DisplayText = disptxt;
+@:      this.Id = id;
+@:  }
+@:}
+    } else {
+@:export class EnumDataItem {
+@:
+@:  DataDescription = "";
+@:  DataGroup = "";
+@:  DataText = "";
+@:  DisplayText = "";
+@:  Id = 0;
+@:
+@:  constructor(desc: string, dgrp: string, dtxt: string, disptxt: string, id: number) {
+@:      this.DataDescription = desc;
+@:      this.DataGroup = dgrp;
+@:      this.DataText = dtxt;
+@:      this.DisplayText = disptxt;
+@:      this.Id = id;
+@:  }
+@:}
+    }
+}
+
+public static class EnumsAll  {
+@{
+    //dataTable.DefaultView.ToTable(true, "employeeid");
+    foreach (System.Data.DataRow drEnum in dtEnumsList.DefaultView.ToTable(true, "data_group").AsEnumerable().OrderBy(r => r.Field<string>("data_group"))) {
+        @:public static readonly EnumDataItem[] @(drEnum["data_group"]) = new EnumDataItem[]
+        @:{
+            foreach (System.Data.DataRow drEnum2 in dtEnumsList.Select("data_group='" + drEnum["data_group"] + "'")) {
+        @:      new EnumDataItem("@(drEnum2["data_description"])",  "@(drEnum2["data_group"])", "@(drEnum2["data_text"])", "@(drEnum2["display_text"])", @(drEnum2["id"]) ),    
+            }//end for data_group
+        @:};
+   }//end for, distinct data_group
+}
+}
+
+public static class EnumValues{
+@{
+    foreach (System.Data.DataRow drEnum in dtEnumsList.Rows) {
+@:  public static EnumDataItem @(drEnum["data_group"])_@(((string)drEnum["data_text"]).Replace(".", ""))  = new EnumDataItem("@(drEnum["data_description"])",  "@(drEnum["data_group"])", "@(drEnum["data_text"])", "@(drEnum["display_text"])", @(drEnum["id"]) );
+}
+}
+}
+
+public static class EnumNames {
+@{    
+    foreach (System.Data.DataRow drEnum in dtGroups.Rows)
+    {
+@:  public static string @(drEnum["data_group"])  = "@(drEnum["data_group"])";
+    }
+}
+}
+
+public class AuthRole
+{
+    public int Id { get; set; } = 0;
+    public string Name { get; set; } = string.Empty;
+    public string Description { get; set; } = string.Empty;
+    public int Rank { get; set; } = 0;
+}
+
+public static class AuthRoleAlls {
+@{
+    foreach (System.Data.DataRow dr in dtAuthRoles.Rows)
+    {
+@:  public static AuthRole  @(dr["name"]) = new AuthRole{
+    @:    Id= @(dr["id"]),
+    @:    Name= "@(dr["name"])",
+    @:    Description= "@(dr["description"])",
+    @:    Rank= @(dr["rank"])
+    @:    };
+    }
+}
+}
+

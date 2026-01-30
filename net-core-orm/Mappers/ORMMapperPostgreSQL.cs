@@ -14,12 +14,13 @@ namespace CoreORM
         public ORMMapperPostgreSQL()
         {
             // PostgreSQL specific type mappings
-            DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "bigint", CodeType = "long", CodeDBType = "System.Data.DbType.Int64", CodeTypeDefaultValue = "0L", CodeDBTypeIsNullable = false, JSCodeType = "number", JSCodeTypeDefaultValue = "0" });
+            DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "int8", CodeType = "long", CodeDBType = "System.Data.DbType.Int64", CodeTypeDefaultValue = "0L", CodeDBTypeIsNullable = false, JSCodeType = "number", JSCodeTypeDefaultValue = "0" });
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "integer", CodeType = "int", CodeDBType = "System.Data.DbType.Int32", CodeTypeDefaultValue = "0", CodeDBTypeIsNullable = false, JSCodeType = "number", JSCodeTypeDefaultValue = "0" });
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "smallint", CodeType = "short", CodeDBType = "System.Data.DbType.Int16", CodeTypeDefaultValue = "0", CodeDBTypeIsNullable = false, JSCodeType = "number", JSCodeTypeDefaultValue = "0" });
+            DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "bool", CodeType = "bool", CodeDBType = "System.Data.DbType.Boolean", CodeTypeDefaultValue = "false", CodeDBTypeIsNullable = false, JSCodeType = "boolean", JSCodeTypeDefaultValue = "false" });
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "boolean", CodeType = "bool", CodeDBType = "System.Data.DbType.Boolean", CodeTypeDefaultValue = "false", CodeDBTypeIsNullable = false, JSCodeType = "boolean", JSCodeTypeDefaultValue = "false" });
-            DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "character", CodeType = "string", CodeDBType = "System.Data.DbType.String", CodeTypeDefaultValue = "string.Empty", CodeDBTypeIsNullable = true, JSCodeType = "string", JSCodeTypeDefaultValue = "\"\"" });
-            DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "character varying", CodeType = "string", CodeDBType = "System.Data.DbType.String", CodeTypeDefaultValue = "string.Empty", CodeDBTypeIsNullable = true, JSCodeType = "string", JSCodeTypeDefaultValue = "\"\"" });
+            DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "int2", CodeType = "bool", CodeDBType = "System.Data.DbType.Boolean", CodeTypeDefaultValue = "false", CodeDBTypeIsNullable = false, JSCodeType = "boolean", JSCodeTypeDefaultValue = "false" });
+            DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "varchar", CodeType = "string", CodeDBType = "System.Data.DbType.String", CodeTypeDefaultValue = "string.Empty", CodeDBTypeIsNullable = true, JSCodeType = "string", JSCodeTypeDefaultValue = "\"\"" });
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "text", CodeType = "string", CodeDBType = "System.Data.DbType.String", CodeTypeDefaultValue = "string.Empty", CodeDBTypeIsNullable = true, JSCodeType = "string", JSCodeTypeDefaultValue = "\"\"" });
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "timestamp", CodeType = "DateTime", CodeDBType = "System.Data.DbType.DateTime", CodeTypeDefaultValue = "DateTime.MinValue", CodeDBTypeIsNullable = false, JSCodeType = "Date", JSCodeTypeDefaultValue = "new Date()" });
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "timestamptz", CodeType = "DateTimeOffset", CodeDBType = "System.Data.DbType.DateTimeOffset", CodeTypeDefaultValue = "DateTimeOffset.MinValue", CodeDBTypeIsNullable = false, JSCodeType = "Date", JSCodeTypeDefaultValue = "new Date()" });
@@ -71,7 +72,7 @@ namespace CoreORM
             // Get Columns with Primary Key and Identity info
             string sqlColumns = $@"
                 SELECT 
-                    cols.table_name, cols.column_name, cols.data_type, cols.character_maximum_length, 
+                    cols.table_name, cols.column_name, cols.udt_name, cols.character_maximum_length, 
                     cols.is_nullable, cols.column_default, cols.numeric_precision, cols.ordinal_position,
                     CASE WHEN pk.column_name IS NOT NULL THEN 'PRI' ELSE '' END as column_key,
                     CASE WHEN cols.is_identity = 'YES' OR cols.column_default LIKE 'nextval%' THEN 'auto_increment' ELSE '' END as extra
@@ -103,7 +104,7 @@ namespace CoreORM
                     DBColumn col = new DBColumn();
                     col.Name = rowCol["column_name"].ToString();
                     col.MappedName = CoreUtils.Data.SnakeToPascal(col.Name);
-                    col.DBType = rowCol["data_type"].ToString();
+                    col.DBType = rowCol["udt_name"].ToString();
                     col.MappedDataType = GetDBTypeMap_ByDataBaseType(col.DBType);
                     col.MaxLength = CoreUtils.Data.ParseIt<long>(rowCol["character_maximum_length"]);
                     col.IsNullable = rowCol["is_nullable"].ToString() == "YES";

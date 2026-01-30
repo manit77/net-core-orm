@@ -5,20 +5,14 @@
 @foreach (var table in Model.Tables)
 {
     string mappedTableName = table.MappedName;
-    string tableName = table.Name;;
+    string tableName = table.Name;
 
-@:@(Html.Raw("<"))file name="@(mappedTableName)/@(mappedTableName)Schema.cs">
+@:@(Html.Raw("<"))file name="ORM/@(mappedTableName)Schema.cs">
 @://Code generated using net-core-orm on @(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"))
-@:using System;
 @:using System.Data.Common;
-@:using System.Reflection.Emit;
-@:using System.Linq;
-@:using System.Reflection;
-@:using Microsoft.VisualBasic;
-@:using System.Dynamic;
-@:using CoreUtils;
-@:using ORM;
+@:using JMS.Common.ORM;
 
+@:namespace JMS.Data.ORM;
 //Props
 @:public static class @(mappedTableName)Props {
 foreach (var col in table.Columns) {
@@ -55,7 +49,7 @@ foreach (var col in table.Columns) {
 @:    [
 foreach (var col in table.Columns)
 {
-@:      new("@(col.MappedName)", "@(col.Name)", typeof(@(col.MappedDataType.CodeType)@(col.IsNullable ? "?" : "")), isPrimaryKey: @(col.IsPrimaryKey.ToString().ToLower()), isAuto: @(col.IsIdentity.ToString().ToLower())),
+@:      new("@(col.MappedName)", "@(col.Name)", typeof(@(col.MappedDataType.CodeType)@(col.IsNullable ? "?" : "")), isPrimaryKey: @(col.IsPrimaryKey.ToString().ToLower()), isAuto: @(col.IsIdentity.ToString().ToLower()), isNullable: @(col.IsNullable.ToString().ToLower().ToLower())),
 }
 @:  ];
 @:  private static readonly ORMField? _autoField = _ormFields.FirstOrDefault(f => f.IsAuto);
@@ -66,17 +60,20 @@ foreach (var col in table.Columns)
 @:  public IReadOnlyList@(Html.Raw("<"))ORMField> PrimaryKeys => _pkFields;
 @:  public ORMField? AutoField => _autoField;
 @:  public @(mappedTableName)Fields Fields => _fieldsMap;
-@:  public object ObjectRef => new @(mappedTableName)ObjectRef();
+@:  public ORMObject ObjectRef => new @(mappedTableName)Model();
 
-@:  public object NewObjectRef()
+@:  public ORMObject NewObjectRef()
 @:  {
-@:      return new @(mappedTableName)ObjectRef();
+@:      return new @(mappedTableName)Model();
 @:  }
 @:} //end schema @(mappedTableName)
 
 //model
 @:public class @(mappedTableName)Model : ORMObject
 @:{
+@:    public @(mappedTableName)Model() : base(Schemas.@(mappedTableName)Schema)
+@:    {
+@:    }
 foreach (var col in table.Columns)
 {
     @:    public @(col.MappedDataType.CodeType)? @(col.MappedName)
@@ -85,13 +82,6 @@ foreach (var col in table.Columns)
     @:        set => Set(nameof(@(col.MappedName)), value);
     @:    }
 }
-@:    public void Defaults()
-@:    {
-@:        foreach (var field in Schemas.SubjectsSchema.ORMFields)
-@:        {
-@:            this.Values[field.PropertyName] = field.DefaultValue;
-@:        }
-@:    }
 @:} //end model @(mappedTableName)
 
 //collections

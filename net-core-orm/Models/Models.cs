@@ -206,10 +206,22 @@ namespace CoreORM
         public string Text = string.Empty;
         public string Type = string.Empty;
         public List<DBParamater> Paramaters = new List<DBParamater>();
+
+        /**
+        * return type for the stored proc
+        */
         public DBTypeMap MappedDataType = null;
+        public List<DBColumn> ReturnFields = new List<DBColumn>();
+
+        public int Oid = 0;
+        
         public string Schema = "dbo";
+        
+        public bool IsScalar { get; set; }
 
         public string DefParams = string.Empty;
+
+       
 
     }
 

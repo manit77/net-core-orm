@@ -1,0 +1,153 @@
+﻿@using CoreORM
+@using System.Linq;
+@model DBDatabase
+using System.Data;
+using System.Data.Common;
+
+// Code generated using net-core-orm
+namespace JMS.Data.DB;
+
+public static class Procedures
+{
+    public static DbParameter GetParam(DbCommand cmd, string name, object value)
+    {
+        var param = cmd.CreateParameter()!;
+        param.ParameterName = name;
+        param.Value = value ?? DBNull.Value;
+        return param;
+    }
+
+    // Define parameter classes for functions
+    #region Parameter Classes
+    @{
+        foreach (var sp in Model.Procedures.Where(p => p.Paramaters.Any()))
+        {
+            @:public class @(sp.Name)_params {
+            foreach(var p in sp.Paramaters.OrderBy(x => x.Index)) {
+                string type = p.MappedDataType.CodeType;
+                if (p.IsNullable && ORMFunctions.IsNullableType(type)) type += "?";
+            @:    public required @(type) @(p.Name) { get; set; }
+            }
+            @:}
+        }
+    }
+    #endregion
+
+    // Define result classes for functions that return tables
+    #region Result Classes
+    @{
+        foreach (var sp in Model.Procedures.Where(p => p.MappedDataType?.CodeType == "DataTable" && p.ReturnFields.Any()))
+        {
+            @:public class @(sp.Name)_result {
+            foreach(var field in sp.ReturnFields) {
+            @:    public @(field.MappedDataType.CodeType) @(field.MappedName) { get; set; }
+            }
+            @:}
+        }
+    }
+    #endregion
+@{
+    foreach (var sp in Model.Procedures)
+    {
+        // Determine the function's purpose based on its return type, not its name.
+        bool returnsResultSet = sp.MappedDataType?.CodeType == "DataTable";
+        bool returnsScalar = sp.IsScalar;
+        bool hasNoReturnValue = sp.MappedDataType == null;
+
+        // Build the C# method signature parameters
+        // We include DbConnection and DbTransaction for .NET Core dependency injection patterns
+        List<string> sqlParamParts = new List<string>();
+        string functionParams = "";
+
+        if (sp.Paramaters.Any())
+        {
+            functionParams = $", {sp.Name}_params parameters";
+            foreach (var p in sp.Paramaters.OrderBy(x => x.Index))
+            {
+                sqlParamParts.Add($"{p.Name} := @{p.Name}");
+            }
+        } else {
+            // For functions with no parameters, the SQL call is just ()
+            sqlParamParts.Clear();
+        }
+
+        string sqlParamString = string.Join(", ", sqlParamParts);
+        
+        // Determine Return Type for the C# Method based on the mapped type
+        string returnType = "Task";
+        if (returnsResultSet)
+        {
+            if (sp.ReturnFields.Any()) {
+                returnType = $"Task<List<{sp.Name}_result>>";
+            } else {
+                returnType = $"Task<{sp.MappedDataType.CodeType}>";
+            }
+            
+        }
+        else if (returnsScalar)
+        {
+            string codeType = sp.MappedDataType.CodeType;
+            if (ORMFunctions.IsNullableType(codeType)) codeType += "?";
+            returnType = $"Task<{codeType}>";
+        }
+
+        @:public static async @(Html.Raw(returnType)) @(sp.Name)(DbConnection conn, DbTransaction? transaction@(Html.Raw(functionParams)))
+        @:{
+        @:    using var cmd = conn.CreateCommand();
+        @:    if (transaction != null) cmd.Transaction = transaction;
+        @:
+        @:    cmd.CommandType = CommandType.Text;    
+
+        if (returnsResultSet) {
+        @:    cmd.CommandText = "SELECT * FROM public.@(sp.Name)(@(sqlParamString))";
+        } else if (returnsScalar) {
+        @:    cmd.CommandText = "SELECT public.@(sp.Name)(@(sqlParamString))";
+        } else { // hasNoReturnValue
+        @:    cmd.CommandText = "CALL public.@(sp.Name)(@(sqlParamString))";
+        }
+
+        foreach (var p in sp.Paramaters)
+        {
+        @:    cmd.Parameters.Add(GetParam(cmd, "@(p.Name)", parameters.@(p.Name)));
+        }
+        @:
+        if (returnsResultSet)
+        {
+            if (sp.ReturnFields.Any()) {
+        @:    var results = new List<@(sp.Name)_result>();
+        @:    using var reader = await cmd.ExecuteReaderAsync();
+        
+                foreach(var field in sp.ReturnFields) {
+        @:    int ordinal_@(field.Name) = reader.GetOrdinal("@(field.Name)");
+                }
+
+        @:    while (await reader.ReadAsync())
+        @:    {
+        @:        results.Add(new @(sp.Name)_result
+        @:        {
+                foreach(var field in sp.ReturnFields) {
+        @:            @(field.MappedName) = CoreUtils.Data.ParseIt<@(field.MappedDataType.CodeType)>(reader.GetValue(ordinal_@(field.Name))),
+                }
+        @:        });
+        @:    }
+        @:    return results;
+            } else {
+        @:    // Fallback for when return fields could not be determined
+        @:    // This assumes an extension method `GetDataTableAsync` exists for DbCommand
+        @:    return await cmd.GetDataTableAsync();
+            }
+        }
+        else if (returnsScalar)
+        {
+        @:    var result = await cmd.ExecuteScalarAsync();
+        @:    if (result == null || result == DBNull.Value) return default;
+        @:    return (@(sp.MappedDataType.CodeType))Convert.ChangeType(result, typeof(@(sp.MappedDataType.CodeType)));
+        }
+        else // hasNoReturnValue
+        {
+        @:    await cmd.ExecuteNonQueryAsync();
+        }
+        @:}
+    }
+}
+}

@@ -8,7 +8,7 @@
     string tableName = table.Name;
 
 @:@(Html.Raw("<"))file name="ORM/@(mappedTableName)Schema.cs">
-@://Code generated using net-core-orm on @(DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"))
+@://Code generated using net-core-orm
 @:using System.Data.Common;
 @:using JMS.Common.ORM;
 
@@ -27,10 +27,19 @@ foreach (var col in table.Columns) {
 } //end for, Columns
 @:} //end Fields @(mappedTableName)
 
+@:public class @(mappedTableName)ORMFields {
+foreach (var col in table.Columns) {
+    @:  public readonly ORMField @(col.MappedName) = new ("@(col.MappedName)", "@(col.Name)", typeof(@(col.MappedDataType.CodeType)@(col.IsNullable ? "?" : "")), isPrimaryKey: @(col.IsPrimaryKey.ToString().ToLower()), isAuto: @(col.IsIdentity.ToString().ToLower()), isNullable: @(col.IsNullable.ToString().ToLower().ToLower()));
+} //end for, Columns
+@:} //end Fields @(mappedTableName)
+
 //primary key Fields
-@:public sealed class @(mappedTableName)PKeys {
+@:public class @(mappedTableName)PKeys : ORMPKObject {
     foreach (var col in table.PrimaryKeys) {
-    @:  public @(col.MappedDataType.CodeType) @(col.MappedName) { get; set; }
+    @:  public @(col.MappedDataType.CodeType) @(col.MappedName) { 
+    @:         get => (Data.TryGetValue("@(col.MappedName)", out object? value) && value != null && value != DBNull.Value) ? (long)value! : 0;
+    @:        set => Data["@(col.MappedName)"] = value;
+@:    }
     } //end for, Columns
 @:} //end PKeys @(mappedTableName)
 
@@ -45,23 +54,23 @@ foreach (var col in table.Columns) {
 // schema
 @:public class @(mappedTableName)Schema: IORMSchema {
 @:  public string TableName => "@(tableName)";
-@:  private static readonly IReadOnlyList@(Html.Raw("<"))ORMField> _ormFields =
+@:  private static readonly IReadOnlyList@(Html.Raw("<"))ORMField> _ormFieldsList =
 @:    [
 foreach (var col in table.Columns)
 {
 @:      new("@(col.MappedName)", "@(col.Name)", typeof(@(col.MappedDataType.CodeType)@(col.IsNullable ? "?" : "")), isPrimaryKey: @(col.IsPrimaryKey.ToString().ToLower()), isAuto: @(col.IsIdentity.ToString().ToLower()), isNullable: @(col.IsNullable.ToString().ToLower().ToLower())),
 }
 @:  ];
-@:  private static readonly ORMField? _autoField = _ormFields.FirstOrDefault(f => f.IsAuto);
-@:  private static readonly IReadOnlyList@(Html.Raw("<"))ORMField> _pkFields = _ormFields.Where(f => f.IsPrimaryKey).ToList();
-@:  private static readonly @(mappedTableName)Fields _fieldsMap = new @(mappedTableName)Fields();
+@:  private static readonly ORMField? _autoField = _ormFieldsList.FirstOrDefault(f => f.IsAuto);
+@:  private static readonly IReadOnlyList@(Html.Raw("<"))ORMField> _pkFields = _ormFieldsList.Where(f => f.IsPrimaryKey).ToList();
+@:  private static readonly @(mappedTableName)ORMFields _fields = new @(mappedTableName)ORMFields();
 
-@:  public IReadOnlyList@(Html.Raw("<"))ORMField> ORMFields => _ormFields;
+@:  public IReadOnlyList@(Html.Raw("<"))ORMField> ORMFieldsList => _ormFieldsList;
 @:  public IReadOnlyList@(Html.Raw("<"))ORMField> PrimaryKeys => _pkFields;
 @:  public ORMField? AutoField => _autoField;
-@:  public @(mappedTableName)Fields Fields => _fieldsMap;
+@:  public @(mappedTableName)ORMFields Fields => _fields;
 @:  public ORMObject ObjectRef => new @(mappedTableName)Model();
-
+@:  public IReadOnlyDictionary@(Html.Raw("<"))string, ORMField> ORMFieldsDictionary => _ormFieldsList.ToDictionary(f => f.PropertyName);
 @:  public ORMObject NewObjectRef()
 @:  {
 @:      return new @(mappedTableName)Model();
@@ -85,10 +94,10 @@ foreach (var col in table.Columns)
 @:} //end model @(mappedTableName)
 
 //collections
-@:public class @(mappedTableName)Collections :  ORMCollectionsBase<@(mappedTableName)Model, @(mappedTableName)PKeys>
+@:public class @(mappedTableName)Collection :  ORMCollectionsBase<@(mappedTableName)Model, @(mappedTableName)PKeys>
 @:{
 @:    private static readonly @(mappedTableName)Schema schema = Schemas.@(mappedTableName)Schema;
-@:    public @(mappedTableName)Collections(DbConnection connection) : base(connection, schema)
+@:    public @(mappedTableName)Collection(DbConnection connection,  DbTransaction? transaction = null) : base(connection, schema, transaction)
 @:    {
 @:    }
 @:}

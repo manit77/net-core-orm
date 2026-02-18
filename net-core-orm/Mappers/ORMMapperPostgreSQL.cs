@@ -15,12 +15,15 @@ namespace CoreORM
         {
             // PostgreSQL specific type mappings
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "int8", CodeType = "long", CodeDBType = "System.Data.DbType.Int64", CodeTypeDefaultValue = "0L", CodeDBTypeIsNullable = false, JSCodeType = "number", JSCodeTypeDefaultValue = "0" });
+            DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "bigint", CodeType = "long", CodeDBType = "System.Data.DbType.Int64", CodeTypeDefaultValue = "0L", CodeDBTypeIsNullable = false, JSCodeType = "number", JSCodeTypeDefaultValue = "0" });
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "integer", CodeType = "int", CodeDBType = "System.Data.DbType.Int32", CodeTypeDefaultValue = "0", CodeDBTypeIsNullable = false, JSCodeType = "number", JSCodeTypeDefaultValue = "0" });
+            DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "int4", CodeType = "int", CodeDBType = "System.Data.DbType.Int32", CodeTypeDefaultValue = "0", CodeDBTypeIsNullable = false, JSCodeType = "number", JSCodeTypeDefaultValue = "0" });
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "smallint", CodeType = "short", CodeDBType = "System.Data.DbType.Int16", CodeTypeDefaultValue = "0", CodeDBTypeIsNullable = false, JSCodeType = "number", JSCodeTypeDefaultValue = "0" });
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "bool", CodeType = "bool", CodeDBType = "System.Data.DbType.Boolean", CodeTypeDefaultValue = "false", CodeDBTypeIsNullable = false, JSCodeType = "boolean", JSCodeTypeDefaultValue = "false" });
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "boolean", CodeType = "bool", CodeDBType = "System.Data.DbType.Boolean", CodeTypeDefaultValue = "false", CodeDBTypeIsNullable = false, JSCodeType = "boolean", JSCodeTypeDefaultValue = "false" });
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "int2", CodeType = "bool", CodeDBType = "System.Data.DbType.Boolean", CodeTypeDefaultValue = "false", CodeDBTypeIsNullable = false, JSCodeType = "boolean", JSCodeTypeDefaultValue = "false" });
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "varchar", CodeType = "string", CodeDBType = "System.Data.DbType.String", CodeTypeDefaultValue = "string.Empty", CodeDBTypeIsNullable = true, JSCodeType = "string", JSCodeTypeDefaultValue = "\"\"" });
+            DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "character varying", CodeType = "string", CodeDBType = "System.Data.DbType.String", CodeTypeDefaultValue = "string.Empty", CodeDBTypeIsNullable = true, JSCodeType = "string", JSCodeTypeDefaultValue = "\"\"" });
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "text", CodeType = "string", CodeDBType = "System.Data.DbType.String", CodeTypeDefaultValue = "string.Empty", CodeDBTypeIsNullable = true, JSCodeType = "string", JSCodeTypeDefaultValue = "\"\"" });
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "timestamp", CodeType = "DateTime", CodeDBType = "System.Data.DbType.DateTime", CodeTypeDefaultValue = "DateTime.MinValue", CodeDBTypeIsNullable = false, JSCodeType = "Date", JSCodeTypeDefaultValue = "new Date()" });
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "timestamptz", CodeType = "DateTimeOffset", CodeDBType = "System.Data.DbType.DateTimeOffset", CodeTypeDefaultValue = "DateTimeOffset.MinValue", CodeDBTypeIsNullable = false, JSCodeType = "Date", JSCodeTypeDefaultValue = "new Date()" });
@@ -32,7 +35,13 @@ namespace CoreORM
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "json", CodeType = "string", CodeDBType = "System.Data.DbType.String", CodeTypeDefaultValue = "string.Empty", CodeDBTypeIsNullable = true, JSCodeType = "any", JSCodeTypeDefaultValue = "null" });
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "jsonb", CodeType = "string", CodeDBType = "System.Data.DbType.String", CodeTypeDefaultValue = "string.Empty", CodeDBTypeIsNullable = true, JSCodeType = "any", JSCodeTypeDefaultValue = "null" });
             DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "interval", CodeType = "TimeSpan", CodeDBType = "System.Data.DbType.Time", CodeTypeDefaultValue = "TimeSpan.Zero", CodeDBTypeIsNullable = false, JSCodeType = "number", JSCodeTypeDefaultValue = "0" });
-
+            DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "real", CodeType = "float", CodeDBType = "System.Data.DbType.Single", CodeTypeDefaultValue = "0F", CodeDBTypeIsNullable = false, JSCodeType = "number", JSCodeTypeDefaultValue = "0" });
+            DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "time", CodeType = "TimeOnly", CodeDBType = "System.Data.DbType.Time", CodeTypeDefaultValue = "TimeOnly.MinValue", CodeDBTypeIsNullable = false, JSCodeType = "string", JSCodeTypeDefaultValue = "\"\"" });
+            DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "money", CodeType = "decimal", CodeDBType = "System.Data.DbType.Decimal", CodeTypeDefaultValue = "0M", CodeDBTypeIsNullable = false, JSCodeType = "number", JSCodeTypeDefaultValue = "0" });
+            DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "character", CodeType = "string", CodeDBType = "System.Data.DbType.String", CodeTypeDefaultValue = "string.Empty", CodeDBTypeIsNullable = true, JSCodeType = "string", JSCodeTypeDefaultValue = "\"\"" });
+            DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "xml", CodeType = "string", CodeDBType = "System.Data.DbType.Xml", CodeTypeDefaultValue = "string.Empty", CodeDBTypeIsNullable = true, JSCodeType = "string", JSCodeTypeDefaultValue = "\"\"" });
+            DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "bit", CodeType = "string", CodeDBType = "System.Data.DbType.String", CodeTypeDefaultValue = "string.Empty", CodeDBTypeIsNullable = true, JSCodeType = "string", JSCodeTypeDefaultValue = "\"\"" });
+            DataTypeMaps.Add(new DBTypeMap() { DatabaseType = "record", CodeType = "DataTable", CodeDBType = "", CodeTypeDefaultValue = "new DataTable()", CodeDBTypeIsNullable = true, JSCodeType = "any[]", JSCodeTypeDefaultValue = "[]" });
         }
 
         public DBTypeMap GetDBTypeMap_ByDataBaseType(string databaseType)
@@ -85,6 +94,44 @@ namespace CoreORM
                 ) pk ON cols.table_name = pk.table_name AND cols.column_name = pk.column_name AND cols.table_schema = pk.table_schema
                 WHERE cols.table_schema NOT IN ('information_schema', 'pg_catalog');";
             DataTable dtColumns = await db.GetDataTable(sqlColumns, null, CommandType.Text);
+
+            // Get Procedures/Functions
+            string sqlRoutines = @"
+                SELECT
+                    r.routine_name, r.specific_name, r.routine_schema, r.routine_type, r.data_type,
+                    p.oid as routine_oid,
+                    pg_get_function_arguments(p.oid) as function_arguments
+                FROM information_schema.routines r
+                JOIN pg_catalog.pg_proc p ON p.proname = r.routine_name
+                WHERE r.routine_schema NOT IN ('information_schema', 'pg_catalog')
+                ORDER BY r.routine_name; ";
+            DataTable dtProcedures = await db.GetDataTable(sqlRoutines, null, CommandType.Text);
+
+            // Get Procedure/Function Parameters
+            string sqlParameters = @"
+                SELECT
+                    p.specific_name, p.parameter_name, p.data_type, p.parameter_mode, p.ordinal_position
+                FROM information_schema.parameters p
+                WHERE p.specific_schema NOT IN ('information_schema', 'pg_catalog') AND p.parameter_mode IN ('IN', 'INOUT')
+                ORDER BY p.specific_name, p.ordinal_position;";
+            DataTable dtParameters = await db.GetDataTable(sqlParameters, null, CommandType.Text);
+
+            // Get Function return fields for functions that return tables (composite types)
+            string sqlReturnFields = @"
+               SELECT
+                   p.oid as routine_oid,
+                   p.proname AS function_name,
+                   n.nspname AS schema_name,
+                   -- Get the name of the return column
+                   unnest(p.proargnames[p.pronargdefaults+1 : array_length(p.proargnames, 1)]) AS column_name,
+                   -- Get the data type of the return column
+                   format_type(unnest(p.proallargtypes[p.pronargdefaults+1 : array_length(p.proallargtypes, 1)]), NULL) AS column_type
+               FROM pg_proc p
+               JOIN pg_namespace n ON n.oid = p.pronamespace
+               WHERE n.nspname NOT IN ('information_schema', 'pg_catalog')
+                 AND 't' = ANY(p.proargmodes); -- Only functions returning a Table (arg_mode 't')
+            ";
+            DataTable dtReturnFields = await db.GetDataTable(sqlReturnFields, null, CommandType.Text);
             #endregion
 
             foreach (DataRow row in dtTables.Rows)
@@ -121,6 +168,69 @@ namespace CoreORM
                     table.Columns.Add(col);
                 }
                 database.Tables.Add(table);
+            }
+
+            // Load procedures and functions
+            foreach (DataRow row in dtProcedures.Rows)
+            {
+                DBProcedure proc = new DBProcedure();
+                proc.Name = row["routine_name"].ToString();
+                proc.Schema = row["routine_schema"].ToString();
+                proc.Type = row["routine_type"].ToString();
+                proc.Oid = CoreUtils.Data.ParseIt<int>(row["routine_oid"]);
+
+                // Get the full argument signature string which includes default values
+                string functionArgs = row["function_arguments"]?.ToString() ?? "";
+                var argParts = functionArgs.Split(',').Select(a => a.Trim()).ToList();
+
+                string specificName = row["specific_name"].ToString();
+                string returnType = row["data_type"]?.ToString();
+
+                if (!string.IsNullOrEmpty(returnType) && !returnType.Equals("void", StringComparison.OrdinalIgnoreCase))
+                {
+                    proc.MappedDataType = GetDBTypeMap_ByDataBaseType(returnType);
+                    proc.IsScalar = proc.MappedDataType.CodeType != "DataTable";
+
+                    if (!proc.IsScalar)
+                    {
+                        var returnFields = dtReturnFields.AsEnumerable().Where(rf => CoreUtils.Data.ParseIt<int>(rf["routine_oid"]) == proc.Oid);
+                        foreach(DataRow returnFieldRow in returnFields) {
+                            var col = new DBColumn();
+                            col.Name = returnFieldRow["column_name"].ToString();
+                            col.MappedName = CoreUtils.Data.SnakeToPascal(col.Name);
+                            string colType = returnFieldRow["column_type"].ToString();
+                            col.DBType = colType;
+                            col.MappedDataType = GetDBTypeMap_ByDataBaseType(colType);
+                            proc.ReturnFields.Add(col);
+                        }
+                    }
+                }
+
+                var parameters = dtParameters.AsEnumerable().Where(p => p.Field<string>("specific_name") == specificName);
+
+                foreach (DataRow rowParam in parameters)
+                {
+                    DBParamater param = new DBParamater();
+                    param.Name = rowParam["parameter_name"]?.ToString() ?? "";
+                    param.DBType = rowParam["data_type"].ToString();
+                    param.MappedDataType = GetDBTypeMap_ByDataBaseType(param.DBType);
+                    param.Index = CoreUtils.Data.ParseIt<int>(rowParam["ordinal_position"]);
+
+                    string paramMode = rowParam["parameter_mode"]?.ToString();
+                    param.IsOutPut = "OUT".Equals(paramMode, StringComparison.OrdinalIgnoreCase) || "INOUT".Equals(paramMode, StringComparison.OrdinalIgnoreCase);
+
+                    // Find the corresponding argument part to check for a default value.
+                    // Example: "p_name character varying DEFAULT NULL"
+                    var argDef = argParts.FirstOrDefault(a => a.StartsWith(param.Name + " ") || a.StartsWith("IN " + param.Name + " "));
+
+                    param.HasDefaultValue = (argDef?.Contains("DEFAULT") ?? false);
+                    param.IsNullable = param.HasDefaultValue; // If it has a default, it's nullable.
+
+
+                    proc.Paramaters.Add(param);
+                }
+
+                database.Procedures.Add(proc);
             }
 
             // Generate SQL Statements (PostgreSQL Syntax)

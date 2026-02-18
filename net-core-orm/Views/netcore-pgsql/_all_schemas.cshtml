@@ -1,6 +1,7 @@
 @using CoreORM
 @using CoreUtils
 @model DBDatabase
+using JMS.Common.ORM;
 using JMS.Data.ORM;
 namespace JMS.Data;
 
@@ -10,5 +11,16 @@ public static class Schemas
 {
     string tablename = table.MappedName;
 @:    public static @(tablename)Schema @(tablename)Schema { get; } = new @(tablename)Schema();
+}
+@{
+@:    public static List@(Html.Raw("<"))IORMSchema> AllSchemas =>
+@:    [
+       @foreach (var table in Model.Tables)
+        {
+            string tablename = table.MappedName;
+@:            @(tablename)Schema,
+        }
+
+@:    ];
 }
 }

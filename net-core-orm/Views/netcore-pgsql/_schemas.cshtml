@@ -7,12 +7,12 @@
     string mappedTableName = table.MappedName;
     string tableName = table.Name;
 
-@:@(Html.Raw("<"))file name="ORM/@(mappedTableName)Schema.cs">
+@:@(Html.Raw("<"))file name="Schema/@(mappedTableName)Schema.cs">
 @://Code generated using net-core-orm
 @:using System.Data.Common;
-@:using JMS.Common.ORM;
+@:using JMS.ORM.Data;
 
-@:namespace JMS.Data.ORM;
+@:namespace JMS.ORM.Schema;
 //Props
 @:public static class @(mappedTableName)Props {
 foreach (var col in table.Columns) {
@@ -71,9 +71,9 @@ foreach (var col in table.Columns)
 @:  public @(mappedTableName)ORMFields Fields => _fields;
 @:  public ORMObject ObjectRef => new @(mappedTableName)Model();
 @:  public IReadOnlyDictionary@(Html.Raw("<"))string, ORMField> ORMFieldsDictionary => _ormFieldsList.ToDictionary(f => f.PropertyName);
-@:  public ORMObject NewObjectRef()
+@:  public ORMObject NewORMObject()
 @:  {
-@:      return new @(mappedTableName)Model();
+@:      return (ORMObject)new @(mappedTableName)Model().FillDefaultValues();
 @:  }
 @:} //end schema @(mappedTableName)
 
@@ -97,7 +97,7 @@ foreach (var col in table.Columns)
 @:public class @(mappedTableName)Collection :  ORMCollectionsBase<@(mappedTableName)Model, @(mappedTableName)PKeys>
 @:{
 @:    private static readonly @(mappedTableName)Schema schema = Schemas.@(mappedTableName)Schema;
-@:    public @(mappedTableName)Collection(DbConnection connection,  DbTransaction? transaction = null) : base(connection, schema, transaction)
+@:    public @(mappedTableName)Collection(DBConfig dbConfig): base(dbConfig, schema)
 @:    {
 @:    }
 @:}

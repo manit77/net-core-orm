@@ -58,7 +58,7 @@ import { blobToText, GenericDataResult, GenericPost, GenericResult, GenericSearc
 export const API_BASE_URL = new @(Html.Raw("InjectionToken<string>"))('API_BASE_URL');
 
 @foreach (var group in procedures.GroupBy(p => p.Schema))
-{
+{    
     var className = Sanitize(group.Key) + "Service";
     var usedMethodNames = new HashSet<string>();
 
@@ -160,7 +160,7 @@ export class @className {
     var excludedPrefixes = new[] { "GenericDataResult", "GenericSearchResult", "GenericPost", "GenericResult" };
 }
 
-@foreach (var table in table)
+@foreach (var table in tables)
 {
     if (excludedPrefixes.Any(p => table.Name.StartsWith(p))) { continue; }
     if (new[] { "string", "number", "boolean", "object", "any" }.Contains(table.Name.ToLower())) { continue; }

@@ -95,7 +95,7 @@ namespace CoreORM
         static async Task RunInteractiveMenu(ORMConfig config)
         {
             DBDatabase dbMap = null;
-            Console.WriteLine(@$"\nProcessing source type: ${config.SourceType}:");
+            Console.WriteLine($"Processing source type: {config.SourceType}:");
             Console.WriteLine("\nPlease select an action:");
             if (config.SourceType == "openapi")
             {
@@ -106,6 +106,7 @@ namespace CoreORM
                 if (config.ConnectionSource.ToLower().StartsWith("http"))
                 {
                     //download and save to openapi.json
+                    Console.WriteLine($"downloading openapi file... {config.ConnectionSource}");
                     string content = await CoreUtils.Web.DownloadWebsite(config.ConnectionSource);
                     CoreUtils.IO.CreateTextFile(openAPIFilePath, content);
                 }
@@ -145,7 +146,7 @@ namespace CoreORM
         }
 
         static void SaveSchemaToFile(string path, DBDatabase dbMap)
-        {          
+        {
             var settings = new JsonSerializerSettings
             {
                 PreserveReferencesHandling = PreserveReferencesHandling.Objects,
@@ -182,7 +183,7 @@ namespace CoreORM
         }
 
         static async Task ProcessSchema(ORMConfig config, DBDatabase dbMap)
-        {   
+        {
 
             string appDirectory = AppContext.BaseDirectory;
             string dllName = Assembly.GetEntryAssembly().GetName().Name;
@@ -241,6 +242,14 @@ namespace CoreORM
                 }
             }
 
+            IDatabase db = null;
+            if (config.SourceType == "pgsql")
+            {
+                db = new CoreUtils.PostgresDatabase(config.ConnectionSource);
+                //test connection
+                using var conn = await db.GetConnection();
+            }
+
 
             if (config.Views != null)
             {
@@ -273,14 +282,7 @@ namespace CoreORM
                     string outfilepath = view.ViewOutputFilePath;
                     string razorPath = "/Views/" + config.ViewsDirectory + "/" + view.ViewFileName;
 
-                    IDatabase db = null;
-                    if (config.SourceType == "pgsql")
-                    {
-                        db = new CoreUtils.PostgresDatabase(config.ConnectionSource);
-                        //test connection
-                        using var conn = await db.GetConnection();
 
-                    }
 
                     var viewsModel = new ViewsModel
                     {

@@ -1,8 +1,11 @@
 @using CoreORM
 @using System.Linq
 @using Microsoft.AspNetCore.Html
-@model DBDatabase
+@model ViewsModel
 @{
+    var tables = Model.Schema.Tables;
+    var procedures = Model.Schema.Procedures;
+
     Layout = null;
 
     // Helper to sanitize class and method names
@@ -54,7 +57,7 @@ import { blobToText, GenericDataResult, GenericPost, GenericResult, GenericSearc
 
 export const API_BASE_URL = new @(Html.Raw("InjectionToken<string>"))('API_BASE_URL');
 
-@foreach (var group in Model.Procedures.GroupBy(p => p.Schema))
+@foreach (var group in procedures.GroupBy(p => p.Schema))
 {
     var className = Sanitize(group.Key) + "Service";
     var usedMethodNames = new HashSet<string>();
@@ -157,7 +160,7 @@ export class @className {
     var excludedPrefixes = new[] { "GenericDataResult", "GenericSearchResult", "GenericPost", "GenericResult" };
 }
 
-@foreach (var table in Model.Tables)
+@foreach (var table in table)
 {
     if (excludedPrefixes.Any(p => table.Name.StartsWith(p))) { continue; }
     if (new[] { "string", "number", "boolean", "object", "any" }.Contains(table.Name.ToLower())) { continue; }

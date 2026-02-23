@@ -1,8 +1,10 @@
 @using CoreORM
 @using CoreUtils
-@model DBDatabase
-
-@foreach (var table in Model.Tables)
+@model ViewsModel
+@{
+    var tables = Model.Schema.Tables;
+}
+@foreach (var table in tables)
 {
     string mappedTableName = table.MappedName;
 @:@(Html.Raw("<"))file name="Data/@(mappedTableName)/@(mappedTableName)Data.cs">

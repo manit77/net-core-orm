@@ -187,8 +187,6 @@ namespace CoreORM
 
             var db = new CoreUtils.SQLServerDatabase(connectionstring);
             var conn = db.GetConnection();
-            database.DB = db;
-
             //var mappingsList = db.Query<DBORMMappings>("select * from ORMMappings order by TableName, ColumnName");
 
             System.Data.DataSet ds = await db.GetDataSet(this.SQLGetSchema, null, CommandType.Text);

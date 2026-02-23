@@ -1,31 +1,19 @@
 @using CoreORM
 @using System.Linq
 @using System.Data
-@model DBDatabase
+@model ViewsModel
 @{
+    var tables = Model.Schema.Tables;
     //get enums list
     var dtGroups = await Model.DB.GetDataTable("SELECT distinct data_group FROM public.enums_list ORDER BY data_group");
     System.Data.DataTable dtEnumsList = await Model.DB.GetDataTable("SELECT id, data_group, data_text, data_description, display_text, sequence FROM public.enums_list ORDER BY data_group, data_text");
 
     System.Data.DataTable dtAuthRoles = await Model.DB.GetDataTable("SELECT * FROM public.auth_roles");
 
-    bool ServerSideCode = true;
-
 }
 //Code generated using net-core-orm
 namespace JMS.ORM.Enums;
-
-@{
-    if(Model.param0 != null)
-    {
-        if (Model.param0 is string && (string)Model.param0 == "clientside")
-        {
-            ServerSideCode = false;
-        }
-    }
-
-    if (ServerSideCode)
-    {
+@{  
 @:public class EnumDataItem {
 @:
 @:  public string DataDescription = "";
@@ -42,24 +30,6 @@ namespace JMS.ORM.Enums;
 @:      this.Id = id;
 @:  }
 @:}
-    } else {
-@:export class EnumDataItem {
-@:
-@:  DataDescription = "";
-@:  DataGroup = "";
-@:  DataText = "";
-@:  DisplayText = "";
-@:  Id = 0;
-@:
-@:  constructor(desc: string, dgrp: string, dtxt: string, disptxt: string, id: number) {
-@:      this.DataDescription = desc;
-@:      this.DataGroup = dgrp;
-@:      this.DataText = dtxt;
-@:      this.DisplayText = disptxt;
-@:      this.Id = id;
-@:  }
-@:}
-    }
 }
 
 public static class EnumsAll  {

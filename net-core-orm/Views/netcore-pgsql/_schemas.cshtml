@@ -1,8 +1,12 @@
 @using CoreORM
 @using CoreUtils
-@model DBDatabase
+@model ViewsModel
+@{
+    var tables = Model.Schema.Tables;
+    var procedures = Model.Schema.Procedures;
+}
 
-@foreach (var table in Model.Tables)
+@foreach (var table in tables)
 {
     string mappedTableName = table.MappedName;
     string tableName = table.Name;

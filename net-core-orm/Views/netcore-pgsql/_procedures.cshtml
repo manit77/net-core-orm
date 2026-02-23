@@ -1,6 +1,11 @@
 ﻿@using CoreORM
 @using System.Linq;
-@model DBDatabase
+@model ViewsModel
+@{
+    var tables = Model.Schema.Tables;
+    var procedures = Model.Schema.Procedures;
+}
+
 using System.Data;
 using System.Data.Common;
 
@@ -20,7 +25,7 @@ public static class Procedures
     // Define parameter classes for functions
     #region Parameter Classes
     @{
-        foreach (var sp in Model.Procedures.Where(p => p.Paramaters.Any()))
+        foreach (var sp in procedures.Where(p => p.Paramaters.Any()))
         {
             @:public class @(sp.Name)_params {
             foreach(var p in sp.Paramaters.OrderBy(x => x.Index)) {
@@ -36,7 +41,7 @@ public static class Procedures
     // Define result classes for functions that return tables
     #region Result Classes
     @{
-        foreach (var sp in Model.Procedures.Where(p => p.MappedDataType?.CodeType == "DataTable" && p.ReturnFields.Any()))
+        foreach (var sp in procedures.Where(p => p.MappedDataType?.CodeType == "DataTable" && p.ReturnFields.Any()))
         {
             @:public class @(sp.Name)_result {
             foreach(var field in sp.ReturnFields) {
@@ -47,7 +52,7 @@ public static class Procedures
     }
     #endregion
 @{
-    foreach (var sp in Model.Procedures)
+    foreach (var sp in procedures)
     {
         // Determine the function's purpose based on its return type, not its name.
         bool returnsResultSet = sp.MappedDataType?.CodeType == "DataTable";

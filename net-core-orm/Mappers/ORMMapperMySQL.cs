@@ -90,9 +90,6 @@ namespace CoreORM
                 CoreUtils.ConsoleLogger.Warn("Database connection2 successful.");
             }
             
-
-            database.DB = db;
-
             string sql = "";
 
             #region assign datatables

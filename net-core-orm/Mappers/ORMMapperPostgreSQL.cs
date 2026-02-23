@@ -65,7 +65,6 @@ namespace CoreORM
             database.CodeNameSpace = codeNameSpace;
 
             var db = new CoreUtils.PostgresDatabase(connectionstring);
-            database.DB = db;
 
             #region Assign DataTables
             // Get Tables
@@ -140,7 +139,7 @@ namespace CoreORM
                 {
                     Database = database,
                     Name = row["table_name"].ToString(),
-                    MappedName = CoreUtils.Data.SnakeToPascal(row["table_name"].ToString()),
+                    MappedName = CoreUtils.Data.ToPascalCase(row["table_name"].ToString()),
                     Schema = row["table_schema"].ToString()
                 };
 
@@ -150,7 +149,7 @@ namespace CoreORM
                 {
                     DBColumn col = new DBColumn();
                     col.Name = rowCol["column_name"].ToString();
-                    col.MappedName = CoreUtils.Data.SnakeToPascal(col.Name);
+                    col.MappedName = CoreUtils.Data.ToPascalCase(col.Name);
                     col.DBType = rowCol["udt_name"].ToString();
                     col.MappedDataType = GetDBTypeMap_ByDataBaseType(col.DBType);
                     col.MaxLength = CoreUtils.Data.ParseIt<long>(rowCol["character_maximum_length"]);
@@ -197,7 +196,7 @@ namespace CoreORM
                         foreach(DataRow returnFieldRow in returnFields) {
                             var col = new DBColumn();
                             col.Name = returnFieldRow["column_name"].ToString();
-                            col.MappedName = CoreUtils.Data.SnakeToPascal(col.Name);
+                            col.MappedName = CoreUtils.Data.ToPascalCase(col.Name);
                             string colType = returnFieldRow["column_type"].ToString();
                             col.DBType = colType;
                             col.MappedDataType = GetDBTypeMap_ByDataBaseType(colType);

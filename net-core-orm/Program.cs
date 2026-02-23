@@ -13,6 +13,7 @@ using Microsoft.AspNetCore.Mvc.Razor;
 using CommandLine;
 using Newtonsoft.Json;
 using Microsoft.Extensions.Logging;
+using CoreUtils;
 
 namespace CoreORM
 {
@@ -93,85 +94,58 @@ namespace CoreORM
 
         static async Task RunInteractiveMenu(ORMConfig config)
         {
-            Console.WriteLine("\nPlease select an action:");
-            Console.WriteLine("(1) Generate DB Schema (Fetch from DB and save to schema.json)");
-            Console.WriteLine("(2) Process Existing Schema (Load schema.json and execute Views)");
-            Console.WriteLine("(3) Full Sync (1 then 2)");
-            Console.WriteLine("(4) Process OpenAPI (Parse OpenAPI JSON and execute Views)");
-            Console.Write("Enter choice: ");
-            string choice = Console.ReadLine();
-
             DBDatabase dbMap = null;
-            string schemaFilePath = Path.Combine(config.DirOutDir, "schema.json");
-            
-            
-            // Ensure output directory exists for schema file
-            if (!string.IsNullOrEmpty(config.DirOutDir) && !Directory.Exists(config.DirOutDir))
+            Console.WriteLine(@$"\nProcessing source type: ${config.SourceType}:");
+            Console.WriteLine("\nPlease select an action:");
+            if (config.SourceType == "openapi")
             {
-                Directory.CreateDirectory(config.DirOutDir);
-            }
+                string openAPIFilePath = Path.Combine(CoreUtils.IO.CurrentDirectory(), "openapi.json");
+                string openAPISchemaPath = Path.Combine(CoreUtils.IO.CurrentDirectory(), "openapi_schema.json");
 
-            switch (choice)
-            {
-                case "1": // Generate DB Schema
-                    dbMap = await GenerateSchema(config);
-                    SaveSchemaToFile(schemaFilePath, dbMap);
-                    Console.WriteLine($"Schema saved to {schemaFilePath}");
-                    break;
-                case "2": // Process Existing Schema
-                    dbMap = LoadSchemaFromFile(schemaFilePath);
-                    if (dbMap != null)
-                    {
-                        await ProcessSchema(config, dbMap);
-                    }
-                    else
-                    {
-                        Console.WriteLine("Schema file not found.");
-                    }
-                    break;
-                case "3": // Full Sync
-                    dbMap = await GenerateSchema(config);
-                    SaveSchemaToFile(schemaFilePath, dbMap);
-                    Console.WriteLine($"Schema saved to {schemaFilePath}");
+                //open api
+                if (config.ConnectionSource.ToLower().StartsWith("http"))
+                {
+                    //download and save to openapi.json
+                    string content = await CoreUtils.Web.DownloadWebsite(config.ConnectionSource);
+                    CoreUtils.IO.CreateTextFile(openAPIFilePath, content);
+                }
+
+                dbMap = await ProcessOpenAPI(openAPIFilePath, config);
+                if (dbMap != null)
+                {
+                    SaveSchemaToFile(openAPISchemaPath, dbMap);
+                    Console.WriteLine($"Schema from OpenAPI saved to {openAPISchemaPath}");
                     await ProcessSchema(config, dbMap);
-                    break;
-                case "4": // Process OpenAPI
-                    string openAPIFilePath = Path.Combine(CoreUtils.IO.CurrentDirectory(), "openapi.json");
-                    string openAPISchemaPath = Path.Combine(CoreUtils.IO.CurrentDirectory(), "openapi_schema.json");
-
-                    dbMap = await ProcessOpenAPI(openAPIFilePath, config);
-                    if (dbMap != null)
-                    {
-                        SaveSchemaToFile(openAPISchemaPath, dbMap);
-                        Console.WriteLine($"Schema from OpenAPI saved to {openAPISchemaPath}");
-                        await ProcessSchema(config, dbMap);
-                    }
-                    break;
-                default:
-                    Console.WriteLine("Invalid choice.");
-                    break;
+                }
             }
+            else
+            {
+                //db
+                dbMap = await GenerateSchema(config);
+                string dbSchemaFilePath = Path.Combine(CoreUtils.IO.CurrentDirectory(), "db_schema.json");
+                SaveSchemaToFile(dbSchemaFilePath, dbMap);
+                Console.WriteLine($"Schema for db saved to {dbSchemaFilePath}");
+                await ProcessSchema(config, dbMap);
+            }
+
         }
 
         static async Task<DBDatabase> GenerateSchema(ORMConfig config)
         {
-            IDBMapper mapper = config.DatabaseType switch
+            IDBMapper mapper = config.SourceType switch
             {
                 "mysql" => new ORMMapperMySQL(),
                 "pgsql" => new ORMMapperPostgreSQL(),
                 _ => new ORMMapperSQLServer(),
             };
             Console.WriteLine("Generating schema from database...");
-            DBDatabase dbMap = await mapper.GetMapping(config.DBName, config.NameSpace, config.ConnectionString, new List<DBORMMappings>());
+            DBDatabase dbMap = await mapper.GetMapping(config.SourceName, config.NameSpace, config.ConnectionSource, new List<DBORMMappings>());
             Console.WriteLine("Schema generation complete.");
             return dbMap;
         }
 
         static void SaveSchemaToFile(string path, DBDatabase dbMap)
-        {
-            var originalDbConnection = dbMap.DB;
-            dbMap.DB = null; // Not serializable
-
+        {          
             var settings = new JsonSerializerSettings
             {
                 PreserveReferencesHandling = PreserveReferencesHandling.Objects,
@@ -179,8 +153,6 @@ namespace CoreORM
             };
             string json = JsonConvert.SerializeObject(dbMap, settings);
             File.WriteAllText(path, json);
-
-            dbMap.DB = originalDbConnection; // Restore it for subsequent operations (like in Mode 3)
         }
 
         static DBDatabase LoadSchemaFromFile(string path)
@@ -210,15 +182,8 @@ namespace CoreORM
         }
 
         static async Task ProcessSchema(ORMConfig config, DBDatabase dbMap)
-        {
-            if (dbMap.DB == null)
-            {
-                if (config.DatabaseType == "postgres")
-                {
-                    dbMap.DB = new CoreUtils.PostgresDatabase(config.ConnectionString);
-                }
-            }
-                        
+        {   
+
             string appDirectory = AppContext.BaseDirectory;
             string dllName = Assembly.GetEntryAssembly().GetName().Name;
 
@@ -307,13 +272,24 @@ namespace CoreORM
 
                     string outfilepath = view.ViewOutputFilePath;
                     string razorPath = "/Views/" + config.ViewsDirectory + "/" + view.ViewFileName;
-                    dbMap.param0 = "";
-                  
-                    if (!string.IsNullOrEmpty(view.ViewParams))
+
+                    IDatabase db = null;
+                    if (config.SourceType == "pgsql")
                     {
-                        dbMap.param0 = view.ViewParams;
+                        db = new CoreUtils.PostgresDatabase(config.ConnectionSource);
+                        //test connection
+                        using var conn = await db.GetConnection();
+
                     }
-                    txt = renderer.RenderViewToStringAsync(razorPath, dbMap).GetAwaiter().GetResult();
+
+                    var viewsModel = new ViewsModel
+                    {
+                        Schema = dbMap,
+                        CurrentView = view,
+                        DB = db
+                    };
+
+                    txt = renderer.RenderViewToStringAsync(razorPath, viewsModel).GetAwaiter().GetResult();
 
                     CoreUtils.IO.CreateTextFile(outfilepath, txt);
                     Console.WriteLine($"Generated {outfilepath}");

@@ -22,10 +22,10 @@ public class ORMConfig
 {
     public bool IsDefault { get; set; }
     public string ConfigName { get; set; }
-    public string ConnectionString { get; set; }
-    public string DBName { get; set; }
+    public string ConnectionSource { get; set; }
+    public string SourceName { get; set; }
 
-    public string DatabaseType { get; set; }
+    public string SourceType { get; set; }
 
     public string DirOutDir { get; set; }
     public string NameSpace { get; set; }

@@ -1,7 +1,6 @@
 @using CoreORM
 @using CoreUtils
-@model DBDatabase
-using JMS.ORM.Data;
+@model ViewsModel;
 using JMS.ORM.Schema;
 
 //Code generated using net-core-orm
@@ -9,7 +8,10 @@ namespace JMS.ORM;
 
 public static class Schemas
 {
-@foreach (var table in Model.Tables)
+@{
+    var tables = Model.Tables;
+}    
+@foreach (var table in tables)
 {
     string tablename = table.MappedName;
 @:    public static @(tablename)Schema @(tablename)Schema { get; } = new @(tablename)Schema();
@@ -17,7 +19,7 @@ public static class Schemas
 @{
 @:    public static List@(Html.Raw("<"))IORMSchema> AllSchemas =>
 @:    [
-       @foreach (var table in Model.Tables)
+       @foreach (var table in tables)
         {
             string tablename = table.MappedName;
 @:            @(tablename)Schema,

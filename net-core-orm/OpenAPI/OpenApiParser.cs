@@ -23,7 +23,7 @@ public static class OpenApiParser
                 var table = new DBTable
                 {
                     Name = schema.Key,
-                    MappedName = CoreUtils.Data.SnakeToPascal(schema.Key),
+                    MappedName = CoreUtils.Data.ToPascalCase(schema.Key),
                     Database = database
                 };
 
@@ -40,7 +40,7 @@ public static class OpenApiParser
                         table.Columns.Add(new DBColumn
                         {
                             Name = prop.Key,
-                            MappedName = CoreUtils.Data.SnakeToPascal(prop.Key),
+                            MappedName = CoreUtils.Data.ToPascalCase(prop.Key),
                             IsNullable = isNullable,
                             MappedDataType = MapToDbTypeMap(rawType, propSchema["format"]?.ToString())
                         });

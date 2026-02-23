@@ -3,9 +3,19 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Data;
 using System.Threading.Tasks;
+using CoreUtils;
 
 namespace CoreORM
 {
+    /**
+    *   Model to pass to razor view
+    */
+    public class ViewsModel
+    {
+        public DBDatabase Schema { get; set; }
+        public ORMView CurrentView { get; set; }
+        public IDatabase DB { get; set; }
+    }
 
     public interface IDBMapper
     {
@@ -14,13 +24,11 @@ namespace CoreORM
 
     public class DBDatabase
     {
-        public string Name = string.Empty;       
+        public string Name = string.Empty;
         public string CodeNameSpace = string.Empty;
         public List<DBTable> Tables = new List<DBTable>();
         public List<DBTable> Views = new List<DBTable>();
         public List<DBProcedure> Procedures = new List<DBProcedure>();
-        public CoreUtils.IDatabase DB = null;
-        public object param0 = null;
     }
 
     public class DBTable
@@ -175,14 +183,12 @@ namespace CoreORM
         public List<DBColumn> ReturnFields = new List<DBColumn>();
 
         public int Oid = 0;
-        
+
         public string Schema = "dbo";
-        
+
         public bool IsScalar { get; set; }
 
         public string DefParams = string.Empty;
-
-       
 
     }
 
@@ -347,5 +353,4 @@ where AuthUsersAndAuthRoles.UserId= @userid*/
         public DBTable ForDBTable { get; set; }
     }
 
-   
 }

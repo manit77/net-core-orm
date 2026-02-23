@@ -11,6 +11,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.AspNetCore.Mvc.Razor;
 using CommandLine;
+using Newtonsoft.Json;
 using Microsoft.Extensions.Logging;
 
 namespace CoreORM
@@ -53,34 +54,27 @@ namespace CoreORM
                     .WithParsedAsync(async (Options opts) =>
                     {
                         var config = configs.Where(i => i.ConfigName == opts.ConfigName).FirstOrDefault();
-                        if (config != null)
-                        {
-                            await GenFiles(config);
-                        }
-                        else
+                        if (config == null)
                         {
                             //get default
                             var defaultConfig = configs.Where(i => i.IsDefault).FirstOrDefault();
 
                             while (config == null)
                             {
-                                Console.WriteLine($"Enter a config name: [{defaultConfig?.ConfigName}]");
-
+                                Console.Write($"Enter a config name: [{defaultConfig?.ConfigName}] ");
                                 var configname = Console.ReadLine();
-                                if (string.IsNullOrEmpty(configname))
+                                if (string.IsNullOrEmpty(configname) && defaultConfig != null)
                                 {
                                     configname = defaultConfig.ConfigName;
                                 }
-
                                 config = configs.Where(i => i.ConfigName == configname).FirstOrDefault();
                                 if (config != null)
                                 {
-                                    await GenFiles(config);
                                     break;
                                 }
                             }
                         }
-
+                        await RunInteractiveMenu(config);
                     })
                     .ContinueWith(t =>
                     {
@@ -97,25 +91,134 @@ namespace CoreORM
             }
         }
 
-        static async Task GenFiles(ORMConfig config)
+        static async Task RunInteractiveMenu(ORMConfig config)
         {
-            IDBMapper mapper;
+            Console.WriteLine("\nPlease select an action:");
+            Console.WriteLine("(1) Generate DB Schema (Fetch from DB and save to schema.json)");
+            Console.WriteLine("(2) Process Existing Schema (Load schema.json and execute Views)");
+            Console.WriteLine("(3) Full Sync (1 then 2)");
+            Console.WriteLine("(4) Process OpenAPI (Parse OpenAPI JSON and execute Views)");
+            Console.Write("Enter choice: ");
+            string choice = Console.ReadLine();
 
-            if (config.DatabaseType == "mysql")
+            DBDatabase dbMap = null;
+            string schemaFilePath = Path.Combine(config.DirOutDir, "schema.json");
+            
+            
+            // Ensure output directory exists for schema file
+            if (!string.IsNullOrEmpty(config.DirOutDir) && !Directory.Exists(config.DirOutDir))
             {
-                mapper = new ORMMapperMySQL();
-            }
-            else if (config.DatabaseType == "pgsql")
-            {
-                mapper = new ORMMapperPostgreSQL();
-            }
-            else
-            {
-                mapper = new ORMMapperSQLServer();
+                Directory.CreateDirectory(config.DirOutDir);
             }
 
+            switch (choice)
+            {
+                case "1": // Generate DB Schema
+                    dbMap = await GenerateSchema(config);
+                    SaveSchemaToFile(schemaFilePath, dbMap);
+                    Console.WriteLine($"Schema saved to {schemaFilePath}");
+                    break;
+                case "2": // Process Existing Schema
+                    dbMap = LoadSchemaFromFile(schemaFilePath);
+                    if (dbMap != null)
+                    {
+                        await ProcessSchema(config, dbMap);
+                    }
+                    else
+                    {
+                        Console.WriteLine("Schema file not found.");
+                    }
+                    break;
+                case "3": // Full Sync
+                    dbMap = await GenerateSchema(config);
+                    SaveSchemaToFile(schemaFilePath, dbMap);
+                    Console.WriteLine($"Schema saved to {schemaFilePath}");
+                    await ProcessSchema(config, dbMap);
+                    break;
+                case "4": // Process OpenAPI
+                    string openAPIFilePath = Path.Combine(CoreUtils.IO.CurrentDirectory(), "openapi.json");
+                    string openAPISchemaPath = Path.Combine(CoreUtils.IO.CurrentDirectory(), "openapi_schema.json");
+
+                    dbMap = await ProcessOpenAPI(openAPIFilePath, config);
+                    if (dbMap != null)
+                    {
+                        SaveSchemaToFile(openAPISchemaPath, dbMap);
+                        Console.WriteLine($"Schema from OpenAPI saved to {openAPISchemaPath}");
+                        await ProcessSchema(config, dbMap);
+                    }
+                    break;
+                default:
+                    Console.WriteLine("Invalid choice.");
+                    break;
+            }
+        }
+
+        static async Task<DBDatabase> GenerateSchema(ORMConfig config)
+        {
+            IDBMapper mapper = config.DatabaseType switch
+            {
+                "mysql" => new ORMMapperMySQL(),
+                "pgsql" => new ORMMapperPostgreSQL(),
+                _ => new ORMMapperSQLServer(),
+            };
+            Console.WriteLine("Generating schema from database...");
             DBDatabase dbMap = await mapper.GetMapping(config.DBName, config.NameSpace, config.ConnectionString, new List<DBORMMappings>());
+            Console.WriteLine("Schema generation complete.");
+            return dbMap;
+        }
 
+        static void SaveSchemaToFile(string path, DBDatabase dbMap)
+        {
+            var originalDbConnection = dbMap.DB;
+            dbMap.DB = null; // Not serializable
+
+            var settings = new JsonSerializerSettings
+            {
+                PreserveReferencesHandling = PreserveReferencesHandling.Objects,
+                Formatting = Formatting.Indented
+            };
+            string json = JsonConvert.SerializeObject(dbMap, settings);
+            File.WriteAllText(path, json);
+
+            dbMap.DB = originalDbConnection; // Restore it for subsequent operations (like in Mode 3)
+        }
+
+        static DBDatabase LoadSchemaFromFile(string path)
+        {
+            if (!File.Exists(path)) { Console.WriteLine($"Schema file not found: {path}"); return null; }
+            Console.WriteLine($"Loading schema from {path}...");
+            string json = File.ReadAllText(path);
+            var settings = new JsonSerializerSettings { PreserveReferencesHandling = PreserveReferencesHandling.Objects };
+            var dbMap = JsonConvert.DeserializeObject<DBDatabase>(json, settings);
+            Console.WriteLine("Schema loaded.");
+            return dbMap;
+        }
+
+        static async Task<DBDatabase> ProcessOpenAPI(string openApiJsonPath, ORMConfig config)
+        {
+            string path = Path.IsPathRooted(openApiJsonPath) ? openApiJsonPath : Path.Combine(CoreUtils.IO.CurrentDirectory(), openApiJsonPath);
+            if (string.IsNullOrEmpty(openApiJsonPath) || !File.Exists(path))
+            {
+                Console.WriteLine($"OpenAPI JSON file path is not configured or file does not exist: {path}");
+                return null;
+            }
+            Console.WriteLine($"Processing OpenAPI file: {path}");
+            string apiJson = await File.ReadAllTextAsync(path);
+            var dbMap = OpenApiParser.MapToDBDatabase(apiJson, config.NameSpace);
+            Console.WriteLine("OpenAPI processing complete.");
+            return dbMap;
+        }
+
+        static async Task ProcessSchema(ORMConfig config, DBDatabase dbMap)
+        {
+            if (dbMap.DB == null)
+            {
+                if (config.DatabaseType == "postgres")
+                {
+                    dbMap.DB = new CoreUtils.PostgresDatabase(config.ConnectionString);
+                }
+            }
+                        
             string appDirectory = AppContext.BaseDirectory;
             string dllName = Assembly.GetEntryAssembly().GetName().Name;
 
@@ -148,7 +251,7 @@ namespace CoreORM
             var provider = builder.Services.BuildServiceProvider();
             var renderer = provider.GetRequiredService<RazorViewToStringRenderer>();
             string txt = string.Empty;
-            
+
             DateTime startTime = DateTime.Now;
             Console.WriteLine("BEGIN Code Generation " + startTime);
             Console.WriteLine($"DirOutDir={config.DirOutDir}");
@@ -172,7 +275,7 @@ namespace CoreORM
                     }
                 }
             }
-            
+
 
             if (config.Views != null)
             {
@@ -205,7 +308,7 @@ namespace CoreORM
                     string outfilepath = view.ViewOutputFilePath;
                     string razorPath = "/Views/" + config.ViewsDirectory + "/" + view.ViewFileName;
                     dbMap.param0 = "";
-
+                  
                     if (!string.IsNullOrEmpty(view.ViewParams))
                     {
                         dbMap.param0 = view.ViewParams;
@@ -256,8 +359,8 @@ namespace CoreORM
                     Console.WriteLine($"Generated {outfilepath}");
                 }
             }
-            
-            
+
+
             if (config.PostProcess != null)
             {
                 foreach (var postProcess in config.PostProcess)
@@ -275,6 +378,7 @@ namespace CoreORM
 
             Console.WriteLine($"Code Generation Done. {(DateTime.Now - startTime).TotalSeconds} secs");
         }
+
 
         static void ExecProcess(ORMProcess process)
         {

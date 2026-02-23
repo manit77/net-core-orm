@@ -1,0 +1,174 @@
+@using CoreORM
+@using System.Linq
+@using Microsoft.AspNetCore.Html
+@model DBDatabase
+@{
+    Layout = null;
+
+    // Helper to sanitize class and method names
+    string Sanitize(string name) => name?.Replace(".", "_").Replace("-", "_") ?? "Unknown";
+
+    // Helper for Types with Raw Brackets
+    // Helper for Types with Raw Brackets
+    string GetTsType(string typeName) {
+        if (string.IsNullOrEmpty(typeName)) return "any";
+        
+        // Handle Dictionary mapping
+        if (typeName.Contains("DictionaryOfstringAndstring")) {
+            return "{ [key: string]: string }";
+        }
+
+        // Handle the Generic mapping logic (OfListOf -> <Array<T>>)
+        string cleaned = typeName.Replace("OfListOf", "<Array<").Replace("Of", "<");
+        
+        // --- THE FIX: Smart Bracket Balancing ---
+        int openBrackets = cleaned.Count(f => f == '<');
+        int closeBrackets = cleaned.Count(f => f == '>');
+        int missingBrackets = openBrackets - closeBrackets;
+        
+        if (missingBrackets > 0) {
+            cleaned += new string('>', missingBrackets);
+        }
+        // ----------------------------------------
+        
+        // SAFE Type translations using Regex Word Boundaries (\b)
+        cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"\bint\b", "number");
+        cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"\bdecimal\b", "number");
+        cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"\bbool\b", "boolean");
+        cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"\bDateTime\b", "Date");
+        cleaned = System.Text.RegularExpressions.Regex.Replace(cleaned, @"\bobject\b", "any");
+
+        return cleaned;
+    }
+
+    // Helper to wrap generics in Raw
+    Microsoft.AspNetCore.Html.IHtmlContent RawType(string type) {
+        return Html.Raw(type);
+    }
+}
+import { mergeMap as _observableMergeMap, catchError as _observableCatch } from 'rxjs/operators';
+import { Observable, throwError as _observableThrow, of as _observableOf } from 'rxjs';
+import { Injectable, Inject, Optional, InjectionToken } from '@(Html.Raw("@"))angular/core';
+import { HttpClient, HttpHeaders, HttpResponse, HttpResponseBase } from '@(Html.Raw("@"))angular/common/http';
+import { blobToText, GenericDataResult, GenericPost, GenericResult, GenericSearchResult, throwException, GenericPostData } from './models';
+
+export const API_BASE_URL = new @(Html.Raw("InjectionToken<string>"))('API_BASE_URL');
+
+@foreach (var group in Model.Procedures.GroupBy(p => p.Schema))
+{
+    var className = Sanitize(group.Key) + "Service";
+    var usedMethodNames = new HashSet<string>();
+
+<text>
+@(Html.Raw("@"))Injectable({ providedIn: 'root' })
+export class @className {
+    private http: HttpClient;
+    private baseUrl: string;
+    //protected jsonParseReviver: ((key: string, value: any) => any) | undefined = undefined;
+    protected jsonParseReviver = (key: string, value: any): any => {
+        // Regex to check if the string matches an ISO 8601 Date format
+        // Matches standard API dates like "2026-02-22T21:12:39.123Z" or "2026-02-22T21:12:39"
+        const dateFormat = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d*)?(?:[-+]\d{2}:?\d{2}|Z)?$/;
+
+        if (typeof value === "string" && dateFormat.test(value)) {
+            return new Date(value);
+        }
+
+        // Return the value unchanged if it's not a date
+        return value;
+    };
+
+    constructor(@(Html.Raw("@"))Inject(HttpClient) http: HttpClient, @(Html.Raw("@"))Optional() @(Html.Raw("@"))Inject(API_BASE_URL) baseUrl?: string) {
+        this.http = http;
+        this.baseUrl = baseUrl ?? "http://localhost:8100/";
+    }
+
+    @foreach (var proc in group)
+    {
+        var rawName = proc.Name.Split('_').Last();
+        var baseMethodName = string.IsNullOrEmpty(rawName) ? "index" : Sanitize(rawName);
+        
+        // Detect duplicates and append Verb (GET/POST) if necessary
+        var methodName = usedMethodNames.Contains(baseMethodName) 
+            ? baseMethodName + "_" + proc.Type.ToLower() 
+            : baseMethodName;
+            
+        usedMethodNames.Add(methodName);
+
+        var tsReturnType = GetTsType(proc.MappedDataType?.CodeType);
+        var inputParam = proc.Paramaters.FirstOrDefault();
+        var hasParam = inputParam != null;
+
+        @:/** @@return OK */
+        @:@(methodName)(@RawType(hasParam ? $"body: {GetTsType(inputParam.MappedDataType.CodeType)}" : "")): Observable@(Html.Raw("<"))@RawType(tsReturnType)@(Html.Raw(">")) {
+            @:let url_ = this.baseUrl + "@(proc.Name.Contains("__") ? "/" + proc.Name.Split("__").Last().Replace("_", "/") : "/api/" + group.Key + "/" + methodName)";
+            @:url_ = url_.replace(/[?&]$/, "");
+            
+            @:let options_ : any = {
+                if (hasParam && proc.Type.ToLower() == "post") {
+                @:body: JSON.stringify(body),
+                }
+                @:observe: "response",
+                @:responseType: "blob",
+                @:headers: new HttpHeaders({
+                    @:"Content-Type": "application/json",
+                    @:"Accept": "application/json"
+                @:})
+            @:};
+
+            @:return this.http.request("@proc.Type.ToLower()", url_, options_).pipe(_observableMergeMap((response_ : any) => {
+                @:return this.process@(methodName)(response_);
+            @:})).pipe(_observableCatch((response_: any) => {
+                @:if (response_ instanceof HttpResponseBase) {
+                    @:try {
+                        @:return this.process@(methodName)(response_ as any);
+                    @:} catch (e) {
+                        @:return _observableThrow(e) as any as Observable@(Html.Raw("<"))@RawType(tsReturnType)@(Html.Raw(">"));
+                    @:}
+                @:} else
+                    @:return _observableThrow(response_) as any as Observable@(Html.Raw("<"))@RawType(tsReturnType)@(Html.Raw(">"));
+            @:}));
+        @:}
+
+        @:protected process@(methodName)(response: HttpResponseBase): Observable@(Html.Raw("<"))@RawType(tsReturnType)@(Html.Raw(">")) {
+            @:const status = response.status;
+            @:const responseBlob = response instanceof HttpResponse ? response.body : (response as any).error instanceof Blob ? (response as any).error : undefined;
+            @:let _headers: any = {}; if (response.headers) { for (let key of response.headers.keys()) { _headers[key] = response.headers.get(key); }}
+            @:if (status === 200) {
+                @:return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+                @:let result200: any = null;
+                @:result200 = _responseText === "" ? null : JSON.parse(_responseText, this.jsonParseReviver) as @RawType(tsReturnType);
+                @:return _observableOf(result200);
+                @:}));
+            @:} else if (status !== 200 && status !== 204) {
+                @:return blobToText(responseBlob).pipe(_observableMergeMap((_responseText: string) => {
+                @:return throwException("An unexpected server error occurred.", status, _responseText, _headers);
+                @:}));
+            @:}
+            @:return _observableOf(null as any);
+        @:}
+    }
+}
+</text>
+}
+
+@* --- Interface Generation Section --- *@
+@{
+    var excludedPrefixes = new[] { "GenericDataResult", "GenericSearchResult", "GenericPost", "GenericResult" };
+}
+
+@foreach (var table in Model.Tables)
+{
+    if (excludedPrefixes.Any(p => table.Name.StartsWith(p))) { continue; }
+    if (new[] { "string", "number", "boolean", "object", "any" }.Contains(table.Name.ToLower())) { continue; }
+
+<text>
+export interface @RawType(GetTsType(table.Name)) {
+    @foreach (var col in table.Columns)
+    {
+        var tsPropType = GetTsType(col.MappedDataType?.CodeType);
+        @:@(col.Name)@(col.IsNullable ? "?" : ""): @RawType(tsPropType);
+    }
+}
+</text>
+}
